@@ -60,8 +60,28 @@ if($mybb->input['action'] == "do_general")
 		$db->update_query("forums", $update, "fid IN (" . $db->escape_string($new_mysupport_forums) . ")");
 	}
 
+	$mysupportdenial_forums = "";
+	if(empty($mybb->input['mysupportdenial_forums']))
+	{
+		$mybb->input['mysupportdenial_forums'] = array();
+	}
+	$mysupportdenial_forums = implode(",", array_map("intval", $mybb->input['mysupportdenial_forums']));
+
+	$db->update_query('forums', array('mysupportdenial' => 0));
+	if(!empty($mysupportdenial_forums))
+	{
+		$update = array(
+			"mysupportdenial" => 1
+		);
+		$db->update_query("forums", $update, "fid IN (" . $db->escape_string($mysupportdenial_forums) . ")");
+	}
+	
 	$new_mysupport_move_forum = intval($mybb->input['mysupport_move_forum']);
-	if($new_mysupport_move_forum)
+	if($new_mysupport_move_forum == -1)
+	{
+		$db->update_query('forums', array('mysupportmove' => 0));
+	}
+	elseif($new_mysupport_move_forum)
 	{
 		$query = $db->simple_select("forums", "type", "fid = '{$new_mysupport_move_forum}'");
 		$type = $db->fetch_field($query, "type");
@@ -916,28 +936,33 @@ else
 
 	$table->construct_header($lang->mysupport);
 
-	$current_mysupport_forums = array();
-	$forums = $cache->read("forums");
+	$forums = $cache->read('forums');
+
+	$current_mysupport_forums = $current_mysupportdenial_forums = array();
+	$current_mysupport_move_forum = -1;
 	foreach($forums as $forum)
 	{
 		if($forum['mysupport'] == 1)
 		{
 			$current_mysupport_forums[] = $forum['fid'];
 		}
-	}
-	$mysupport_forums = $form->generate_forum_select('mysupport_forums[]', $current_mysupport_forums, array('multiple' => true, 'size' => 5));
-	$form_container->output_row($lang->mysupport_forums, '', $mysupport_forums);
-
-	$current_mysupport_move_forum = "";
-	$forums = $cache->read("forums");
-	foreach($forums as $forum)
-	{
+		if(/*$forum['mysupport'] == 1 && */$forum['mysupportdenial'] == 1)
+		{
+			$current_mysupportdenial_forums[] = $forum['fid'];
+		}
 		if($forum['mysupportmove'] == 1)
 		{
 			$current_mysupport_move_forum = $forum['fid'];
 		}
 	}
 	$mysupport_move_forum = $form->generate_forum_select('mysupport_move_forum', $current_mysupport_move_forum, array('size' => 5));
+	$mysupport_forums = $form->generate_forum_select('mysupport_forums[]', $current_mysupport_forums, array('multiple' => true, 'size' => 5));
+	$form_container->output_row($lang->mysupport_forums, '', $mysupport_forums);
+
+	$mysupportdenial_forums = $form->generate_forum_select('mysupportdenial_forums[]', $current_mysupportdenial_forums, array('multiple' => true, 'size' => 5));
+	$form_container->output_row($lang->mysupportdenial_forums, $lang->mysupportdenial_forums_desc, $mysupportdenial_forums);
+
+	$mysupport_move_forum = $form->generate_forum_select('mysupport_move_forum', $current_mysupport_move_forum, array('main_option' => $lang->none));
 	$form_container->output_row($lang->mysupport_move_forum, $lang->mysupport_move_forum_desc, $mysupport_move_forum);
 
 	$current_canmarksolved_groups = array();
@@ -1024,4 +1049,3 @@ function generate_mysupport_tabs($selected)
 
 	$page->output_nav_tabs($sub_tabs, $selected);
 }
-?>

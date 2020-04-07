@@ -24,6 +24,7 @@ if(!defined("IN_MYBB"))
 }
 
 define("MYSUPPORT_VERSION", "0.5");
+//define('MYSUPPORT_FORCE_UPDATE', 1);
 
 $plugins->add_hook("admin_config_action_handler", "mysupport_admin_config_action_handler");
 $plugins->add_hook("admin_config_menu", "mysupport_admin_config_menu");
@@ -37,7 +38,7 @@ $plugins->add_hook("editpost_start", "mysupport_thread_info");
 $plugins->add_hook("fetch_wol_activity_end", "mysupport_friendly_wol");
 $plugins->add_hook("forumdisplay_start", "mysupport_forumdisplay_searchresults");
 $plugins->add_hook("forumdisplay_thread", "mysupport_threadlist_thread");
-$plugins->add_hook("global_start", "mysupport_notices");
+$plugins->add_hook("global_intermediate", "mysupport_notices");
 $plugins->add_hook("member_profile_end", "mysupport_profile");
 $plugins->add_hook("modcp_start", "mysupport_modcp_support_denial");
 $plugins->add_hook("modcp_start", "mysupport_navoption", -10);
@@ -225,7 +226,7 @@ function mysupport_settings_redirect()
 
 	if($installed === true && $mybb->input['plugin'] == "mysupport")
 	{
-		$lang->load("mysupport", true);
+		$lang->load("config_mysupport");
 
 		$gid = mysupport_settings_gid();
 
@@ -254,7 +255,7 @@ function mysupport_showthread()
 	if(mysupport_forum($forum['fid']) && $mybb->input['action'] != "mysupport" && $mybb->input['action'] != "bestanswer")
 	{
 		// load the denied reasons so we can display them to staff if necessary
-		if($mybb->settings['enablemysupportsupportdenial'] == 1 && mysupport_usergroup("canmanagesupportdenial"))
+		if($mybb->settings['enablemysupportsupportdenial'] == 1 && $forum['mysupportdenial'] == 1 && mysupport_usergroup("canmanagesupportdenial"))
 		{
 			$support_denial_reasons = array();
 			$mysupport_cache = $cache->read("mysupport");
@@ -583,39 +584,15 @@ function mysupport_showthread()
 
 			if($show_more_link)
 			{
-				$mysupport_js = "<div id=\"mysupport_showthread_more_box\" style=\"display: none;\"></div>
-<script type=\"text/javascript\">
-function mysupport_more_link()
-{
-	var url = '{$mybb->settings['bburl']}/showthread.php?tid={$tid}&mysupport_full=1';
+				$thread_url = $mybb->settings['bburl'].'/'.get_thread_link($tid);
+				$thread_url .= (strpos('?', $thread_url) ? '?' : '&').'mysupport_full=1';
 
-	new Ajax.Request(url+'&ajax=1', {
-		method: 'get',
-		onSuccess: function(data) {
-			if(data.responseText != '')
-			{
-				$('mysupport_showthread_more_box').style.display = '';
-				$('mysupport_showthread_more_box').innerHTML = data.responseText;
-			}
-			else
-			{
-				window.location = url;
-			}
-		}
-	});
-}
-
-function mysupport_close_more_box()
-{
-	$('mysupport_showthread_more_box').style.display = 'none';
-	$('mysupport_showthread_more_box').innerHTML = '';
-}
-</script>";
+				$mysupport_js = '';
 
 				$text = $lang->mysupport_tab_more;
 				$class = "mysupport_tab_misc";
-				$url = $mybb->settings['bburl']."/showthread.php?tid={$tid}&amp;mysupport_full=1";
-				$onclick = " onclick=\"mysupport_more_link(); return false\"";
+				$url = 'javascript:void(0);';
+				$onclick = ' onclick="MyBB.popupWindow(\''.$thread_url.'&ajax=1\', null, true); return false;"';
 				eval("\$mysupport_options .= \"".$templates->get('mysupport_tab')."\";");
 			}
 		}
@@ -634,7 +611,7 @@ function mysupport_close_more_box()
 			{
 				if($mybb->input['ajax'] == 1)
 				{
-					eval("\$mysupport_options = \"".$templates->get('mysupport_form_ajax')."\";");
+					eval("\$mysupport_options = \"".$templates->get('mysupport_form_ajax', 1, 0)."\";");
 					// this is an AJAX request, echo and exit, GO GO GO
 					echo $mysupport_options;
 					exit;
@@ -1497,7 +1474,7 @@ function mysupport_newthread()
 	global $db, $cache, $lang, $forum;
 
 	// this is a MySupport forum and this user has been denied support
-	if(mysupport_forum($forum['fid']) && $mybb->user['deniedsupport'] == 1)
+	if(mysupport_forum($forum['fid']) && $forum['mysupportdenial'] == 1 && $mybb->user['deniedsupport'] == 1)
 	{
 		// start the standard error message to show
 		$deniedsupport_message = $lang->deniedsupport;
@@ -1689,7 +1666,7 @@ function mysupport_postbit(&$post)
 			}
 		}
 
-		if($mybb->settings['enablemysupportsupportdenial'] == 1)
+		if($mybb->settings['enablemysupportsupportdenial'] == 1 && $forum['mysupportdenial'] == 1)
 		{
 			$post['mysupport_deny_support_post'] = "";
 			$denied_text = $denied_text_desc = "";
@@ -1728,7 +1705,7 @@ function mysupport_postbit(&$post)
 			}
 		}
 
-		if($thread['issupportthread'] == 1)
+		if($thread['issupportthread'] == 1 && $thread['firstpost'] == $post['pid'])
 		{
 			$post['mysupport_status'] = mysupport_get_display_status($thread['status'], $thread['onhold'], $thread['statustime'], $thread['uid']);
 		}
@@ -1994,6 +1971,16 @@ function mysupport_thread_list()
 		// set some stuff for this forum that will be used in various places in this function
 		if($mybb->input['fid'])
 		{
+			// https://github.com/JordanMussi/MySupport/commit/7c9dcbb0143d89fe61e3e553c2fc5997f7f0f6f1
+			$fid = intval($mybb->input['fid']);
+			$forumpermissions = forum_permissions();
+			$fpermissions = $forumpermissions[$fid];
+
+			if($fpermissions['canview'] != 1)
+			{
+				error_no_permission();
+			}
+
 			$forum_info = get_forum(intval($mybb->input['fid']));
 			$list_where_sql = " AND t.fid = ".intval($mybb->input['fid']);
 			$stats_where_sql = " AND fid = ".intval($mybb->input['fid']);
@@ -2660,6 +2647,35 @@ function mysupport_modcp_support_denial()
 		}
 		else
 		{
+			$url = 'modcp.php?action=supportdenial';
+
+			$limit = (int)$mybb->settings['threadsperpage'];
+			if($mybb->get_input('limit', 1))
+			{
+				$limit = $mybb->get_input('limit', 1);
+				$url .= '&amp;limit='.$limit;
+			}
+			$limit = $limit > 100 ? 100 : ($limit < 1 ? 1 : $limit);
+
+			$query = $db->simple_select('users', 'COUNT(uid) AS users', 'deniedsupport=1');
+			$userscount = $db->fetch_field($query, 'users');
+
+			if($mybb->get_input('page', 1) > 0)
+			{
+				$start = ($mybb->get_input('page', 1)-1)*$limit;
+				$pages = ceil($userscount/$limit);
+				if($mybb->get_input('page', 1) > $pages)
+				{
+					$start = 0;
+					$mybb->input['page'] = 1;
+				}
+			}
+			else
+			{
+				$start = 0;
+				$mybb->input['page'] = 1;
+			}
+
 			$query = $db->write_query("
 				SELECT u1.username AS support_denied_username, u1.uid AS support_denied_uid, u2.username AS support_denier_username, u2.uid AS support_denier_uid, m.name AS support_denied_reason
 				FROM ".TABLE_PREFIX."users u
@@ -2668,7 +2684,10 @@ function mysupport_modcp_support_denial()
 				LEFT JOIN ".TABLE_PREFIX."users u2 ON (u2.uid = u.deniedsupportuid)
 				WHERE u.deniedsupport = '1'
 				ORDER BY u1.username ASC
+				LIMIT {$start}, {$limit}
 			");
+
+			$multipage = (string)multipage($userscount, $limit, $mybb->get_input('page', 1), $url);
 
 			if($db->num_rows($query) > 0)
 			{
@@ -3850,27 +3869,7 @@ function mysupport_send_assign_pm($uid, $fid, $tid)
 **/
 function mysupport_relative_time($statustime)
 {
-	global $lang;
-
-	$lang->load("mysupport");
-
-	$time = TIME_NOW - $statustime;
-
-	if($time <= 60)
-	{
-		return $lang->mysupport_just_now;
-	}
-	else
-	{
-		$options = array();
-		if($time >= 864000)
-		{
-			$options['hours'] = false;
-			$options['minutes'] = false;
-			$options['seconds'] = false;
-		}
-		return nice_time($time)." ".$lang->mysupport_ago;
-	}
+	return my_date('relative', $statustime);
 }
 
 /**
@@ -4315,4 +4314,3 @@ function mysupport_get_friendly_status($status = 0)
 
 	return $friendlystatus;
 }
-?>

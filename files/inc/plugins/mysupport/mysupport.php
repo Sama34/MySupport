@@ -32,8 +32,7 @@ function mysupport_do_info()
 		'author' => 'MattRogowski',
 		'authorsite' => 'http://mattrogowski.co.uk/mybb/',
 		'version' => MYSUPPORT_VERSION,
-		'compatibility' => '18*',
-		'guid' => '3ebe16a9a1edc67ac882782d41742330'
+		'compatibility' => '18*'
 	);
 }
 
@@ -64,8 +63,7 @@ function mysupport_do_install()
 		"name" => "mysupport",
 		"title" => "MySupport Settings",
 		"description" => "Settings for the MySupport plugin.",
-		"disporder" => "28",
-		"isdefault" => "no"
+		"disporder" => "28"
 	);
 	$db->insert_query("settinggroups", $settings_group);
 
@@ -221,7 +219,7 @@ function mysupport_upgrade()
 	}
 
 	// only need to run through this if the version has actually changed
-	if(!empty($old_version) && $old_version < MYSUPPORT_VERSION)
+	if(!empty($old_version) && $old_version < MYSUPPORT_VERSION || defined('MYSUPPORT_FORCE_UPDATE'))
 	{
 		// reimport the settings to add any new ones and refresh the current ones
 		mysupport_import_settings();
@@ -314,6 +312,10 @@ function mysupport_table_columns($action = 0)
 			),
 			"mysupportmove" => array(
 				"size" => 1
+			),
+			"mysupportdenial" => array(
+				"size" => 1,
+				"default" => 1
 			),
 			"technicalthreads" => array(
 				"size" => 5
@@ -448,7 +450,7 @@ function mysupport_insert_task()
 {
 	global $db, $lang;
 	
-	$lang->load("mysupport");
+	$lang->load("config_mysupport");
 
 	include_once MYBB_ROOT . "inc/functions_task.php";
 	$new_task = array(
@@ -862,33 +864,34 @@ function mysupport_do_templates($type, $master_only = false)
 		);
 		$templates[] = array(
 			"title" => "mysupport_form_ajax",
-			"template" => "<div class=\"mysupport_showthread_more_box\">
-<form action=\"showthread.php\" method=\"post\" style=\"display: inline;\">
-	<input type=\"hidden\" name=\"tid\" value=\"{\$tid}\" />
-	<input type=\"hidden\" name=\"action\" value=\"mysupport\" />
-	<input type=\"hidden\" name=\"via_form\" value=\"1\" />
-	<input type=\"hidden\" name=\"my_post_key\" value=\"{\$mybb->post_code}\" />
-	<table border=\"0\" cellspacing=\"{\$theme['borderwidth']}\" cellpadding=\"{\$theme['tablespace']}\" class=\"tborder\" style=\"width: 250px;\">
+			"template" => '<div class="modal">
+	<div style="overflow-y: auto; max-height: 400px;">
+<form action="{$mybb->settings[\'bburl\']}/showthread.php" method="post">
+	<input type="hidden" name="tid" value="{$tid}" />
+	<input type="hidden" name="action" value="mysupport" />
+	<input type="hidden" name="via_form" value="1" />
+	<input type="hidden" name="my_post_key" value="{$mybb->post_code}" />
+	<table border="0" cellspacing="{$theme[\'borderwidth\']}" cellpadding="{$theme[\'tablespace\']}" class="tborder">
 		<tr>
-			<td class=\"thead\" align=\"center\">
-				<strong>{\$lang->mysupport_additional_options}</strong>
+			<td class="thead" align="center">
+				<strong>{$lang->mysupport_additional_options}</strong>
 			</td>
 		</tr>
-		{\$status_list}
-		{\$assigned_list}
-		{\$priorities_list}
-		{\$categories_list}
-		{\$on_hold}
-		{\$is_support_thread}
+		{$status_list}
+		{$assigned_list}
+		{$priorities_list}
+		{$categories_list}
+		{$on_hold}
+		{$is_support_thread}
 		<tr>
-			<td class=\"tfoot\" align=\"center\">
-				<input type=\"submit\" value=\"{\$lang->update}\" /> <input type=\"button\" value=\"{\$lang->close_options}\" onclick=\"mysupport_close_more_box();\" />
+			<td class="tfoot" align="center">
+				<input type="submit" class="button" value="{$lang->update}" />
 			</td>
 		</tr>
 	</table>
 </form>
-</div>
-<br />"
+	</div>
+</div>'
 		);
 		$templates[] = array(
 			"title" => "mysupport_tab",
@@ -900,7 +903,7 @@ function mysupport_do_templates($type, $master_only = false)
 		);
 		$templates[] = array(
 			"title" => "mysupport_status_image",
-			"template" => "<img src=\"{\$mybb->settings['bburl']}/{\$theme['imgdir']}/mysupport_{\$status_img}.png\" alt=\"{\$status_title}\" title=\"{\$status_title}\" /> "
+			"template" => "<img src=\"{\$theme['imgdir']}/mysupport_{\$status_img}.png\" alt=\"{\$status_title}\" title=\"{\$status_title}\" /> "
 		);
 		$templates[] = array(
 			"title" => "mysupport_status_text",
@@ -1004,7 +1007,7 @@ function mysupport_do_templates($type, $master_only = false)
 		);
 		$templates[] = array(
 			"title" => "mysupport_jumpto_bestanswer",
-			"template" => "<a href=\"{\$mybb->settings['bburl']}/{\$jumpto_bestanswer_url}\"><img src=\"{\$mybb->settings['bburl']}/{\$theme['imgdir']}/{\$bestanswer_image}\" alt=\"{\$lang->jump_to_bestanswer}\" title=\"{\$lang->jump_to_bestanswer}\" /></a>"
+			"template" => "<a href=\"{\$mybb->settings['bburl']}/{\$jumpto_bestanswer_url}\"><img src=\"{\$theme['imgdir']}/{\$bestanswer_image}\" alt=\"{\$lang->jump_to_bestanswer}\" title=\"{\$lang->jump_to_bestanswer}\" /></a>"
 		);
 		$templates[] = array(
 			"title" => "mysupport_assigned",
@@ -1012,15 +1015,15 @@ function mysupport_do_templates($type, $master_only = false)
 		);
 		$templates[] = array(
 			"title" => "mysupport_assigned_toyou",
-			"template" => "<a href=\"{\$mybb->settings['bburl']}/usercp.php?action=assignedthreads\" target=\"_blank\"><img src=\"{\$mybb->settings['bburl']}/{\$theme['imgdir']}/mysupport_assigned_toyou.png\" alt=\"{\$lang->assigned_toyou}\" title=\"{\$lang->assigned_toyou}\" /></a>"
+			"template" => "<a href=\"{\$mybb->settings['bburl']}/usercp.php?action=assignedthreads\" target=\"_blank\"><img src=\"{\$theme['imgdir']}/mysupport_assigned_toyou.png\" alt=\"{\$lang->assigned_toyou}\" title=\"{\$lang->assigned_toyou}\" /></a>"
 		);
 		$templates[] = array(
 			"title" => "mysupport_deny_support_post",
-			"template" => "<img src=\"{\$mybb->settings['bburl']}/{\$theme['imgdir']}/mysupport_no_support.gif\" alt=\"{\$denied_text_desc}\" title=\"{\$denied_text_desc}\" /> {\$denied_text}"
+			"template" => "<img src=\"{\$theme['imgdir']}/mysupport_no_support.gif\" alt=\"{\$denied_text_desc}\" title=\"{\$denied_text_desc}\" /> {\$denied_text}"
 		);
 		$templates[] = array(
 			"title" => "mysupport_deny_support_post_linked",
-			"template" => "<a href=\"{\$mybb->settings['bburl']}/modcp.php?action=supportdenial&amp;do=denysupport&amp;uid={\$post['uid']}&amp;tid={\$post['tid']}\" title=\"{\$denied_text_desc}\"><img src=\"{\$mybb->settings['bburl']}/{\$theme['imgdir']}/mysupport_no_support.gif\" alt=\"{\$denied_text_desc}\" title=\"{\$denied_text_desc}\" /> {\$denied_text}</a>"
+			"template" => "<a href=\"{\$mybb->settings['bburl']}/modcp.php?action=supportdenial&amp;do=denysupport&amp;uid={\$post['uid']}&amp;tid={\$post['tid']}\" title=\"{\$denied_text_desc}\"><img src=\"{\$theme['imgdir']}/mysupport_no_support.gif\" alt=\"{\$denied_text_desc}\" title=\"{\$denied_text_desc}\" /> {\$denied_text}</a>"
 		);
 		$templates[] = array(
 			"title" => "mysupport_deny_support",
@@ -1036,6 +1039,7 @@ function mysupport_do_templates($type, $master_only = false)
 			{\$modcp_nav}
 			<td valign=\"top\">
 				{\$deny_support}
+				{\$multipage}
 			</td>
 		</tr>
 	</table>
@@ -1356,15 +1360,6 @@ function mysupport_stylesheet($action = 0)
 	color: #555555;
 }
 
-.mysupport_showthread_more_box {
-	width: 250px;
-	position: fixed;
-	top: 25%;
-	left: 50%;
-	margin-left: -125px;
-	z-index: 1000;
-}
-
 .mysupport_bar_solved {
 	background: green;
 	height: 10px;
@@ -1404,6 +1399,7 @@ function mysupport_stylesheet($action = 0)
 	background: url(images/mysupport_no_support.gif) no-repeat left center;
 }";
 
+	require_once MYBB_ADMIN_DIR . "inc/functions_themes.php";
 	if($action == 1)
 	{
 		$insert = array(
@@ -1419,6 +1415,8 @@ function mysupport_stylesheet($action = 0)
 			"cachefile" => "css.php?stylesheet=" . intval($sid)
 		);
 		$db->update_query("themestylesheets", $update, "sid = '{$sid}'");
+
+		cache_stylesheet(1, $update['cachefile'], $stylesheet);
 	}
 	elseif($action == 2)
 	{
@@ -1439,11 +1437,13 @@ function mysupport_stylesheet($action = 0)
 	if($action == 1 || $action == -1)
 	{
 		$query = $db->simple_select("themes", "tid");
-		require_once MYBB_ADMIN_DIR . "inc/functions_themes.php";
 		while($tid = $db->fetch_field($query, "tid"))
 		{
+			if($action != -1)
+			{
+				cache_stylesheet($tid, "css.php?stylesheet=".(int)$sid, $stylesheet);
+			}
 			update_theme_stylesheet_list($tid);
 		}
 	}
 }
-?>
