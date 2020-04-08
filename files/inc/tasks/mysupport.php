@@ -26,9 +26,9 @@ function task_mysupport($task)
 	$task_log = $lang->task_mysupport_ran;
 
 	// if this is empty or 0 it'll effect all threads
-	if($mybb->settings['mysupporttaskautosolvetime'] > 0)
+	if($mybb->settings['mysupport_taskautosolvetime'] > 0)
 	{
-		$cut = TIME_NOW - intval($mybb->settings['mysupporttaskautosolvetime']);
+		$cut = TIME_NOW - intval($mybb->settings['mysupport_taskautosolvetime']);
 		$mysupport_forums = implode(",", array_map("intval", mysupport_forums()));
 
 		// are there any MySupport forums?
@@ -58,9 +58,9 @@ function task_mysupport($task)
 		}
 	}
 
-	if($mybb->settings['mysupporttaskbackup'] > 0)
+	if($mybb->settings['mysupport_taskbackup'] > 0)
 	{
-		$timecut = TIME_NOW - $mybb->settings['mysupporttaskbackup'];
+		$timecut = TIME_NOW - $mybb->settings['mysupport_taskbackup'];
 		$query = $db->simple_select("mysupport", "*", "type = 'backup' AND extra > '" . intval($timecut) . "'");
 		// no backups have been made within the cut off time
 		if($db->num_rows($query) == 0)
@@ -192,4 +192,3 @@ function task_mysupport($task)
 	ORDER BY `t`.`tid` ASC;
 	*/
 }
-?>

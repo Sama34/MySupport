@@ -118,7 +118,7 @@ if($mybb->input['action'] == "do_general")
 		$mybb->input['mysupportmodlog'] = array();
 	}
 	$new_mysupportmodlog = implode(",", array_map("intval", $mybb->input['mysupportmodlog']));
-	if($new_mysupportmodlog != $mybb->settings['mysupportmodlog'])
+	if($new_mysupportmodlog != $mybb->settings['mysupport_modlog'])
 	{
 		$update = array(
 			"value" => $db->escape_string($new_mysupportmodlog)
@@ -265,7 +265,7 @@ elseif($mybb->input['action'] == "technical_assign")
 	$mysupport_canmarktechnical = $form->generate_group_select('mysupport_canmarktechnical[]', $current_canmarktechnical_groups, array('multiple' => true, 'size' => 5));
 	$form_container->output_row($lang->mysupport_canmarktechnical, '', $mysupport_canmarktechnical);
 
-	if($mybb->settings['mysupporttechnicalnotice'] != "off")
+	if($mybb->settings['mysupport_technicalnotice'] != "off")
 	{
 		$current_canseetechnotice_groups = array();
 		$groups = $cache->read("usergroups");
@@ -906,7 +906,7 @@ elseif($mybb->input['action'] == "settings")
 }
 elseif($mybb->input['action'] == "forcedisplaytype")
 {
-	if($mybb->settings['mysupportdisplaytype'] == "text")
+	if($mybb->settings['mysupport_displaytype'] == "text")
 	{
 		$update = array(
 			"mysupportdisplayastext" => 1
@@ -977,7 +977,7 @@ else
 	$mysupport_canmarksolved = $form->generate_group_select('mysupport_canmarksolved[]', $current_canmarksolved_groups, array('multiple' => true, 'size' => 5));
 	$form_container->output_row($lang->mysupport_canmarksolved, '', $mysupport_canmarksolved);
 
-	$mysupportmodlog = explode(",", $mybb->settings['mysupportmodlog']);
+	$mysupportmodlog = explode(",", $mybb->settings['mysupport_modlog']);
 	$mysupportmodlog_list = array(
 		0 => $lang->mysupport_mod_log_action_0,
 		1 => $lang->mysupport_mod_log_action_1,
