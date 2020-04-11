@@ -1,8 +1,9 @@
 <?php
 /**
- * MySupport 0.4
+ * MySupport 1.8.0
 
  * Copyright 2010 Matthew Rogowski
+ * https://matt.rogow.ski/
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -206,7 +207,11 @@ function mysupport_do_activate()
 		exit('Please deactivate the MYSUPPORT_FORCE_UPDATE constant and run the activation again.');
 	}
 
-	$PL->stylesheet('ougc_customrep', '.mysupport_status_solved {
+	$PL->stylesheet('ougc_customrep', '.mysupport_status_technical {
+	color: blue;
+}
+
+.mysupport_status_solved {
 	color: green;
 }
 
@@ -214,88 +219,9 @@ function mysupport_do_activate()
 	color: red;
 }
 
-.mysupport_status_technical {
-	color: blue;
-}
-
-.mysupport_status_onhold {
-	color: yellow;
-}
-
-.mysupport_tabs {
-	margin: 20px auto;
-}
-
-.mysupport_tab {
-	text-align: center;
-	padding: 5px;
-	display: inline;
-}
-
-.mysupport_tab_solved {
-	background: #D6ECA6;
-	border: 2px solid #009900;
-	color: #009900;
-	font-weight: bold;
-}
-
-.mysupport_tab_solved a {
-	color: #009900;
-}
-
-.mysupport_tab_not_solved {
-	background: #FFE4E1;
-	border: 2px solid #CD0000;
-	color: #CD0000;
-	font-weight: bold;
-}
-
-.mysupport_tab_not_solved a {
-	color: #CD0000;
-}
-
-.mysupport_tab_technical {
-	background: #ADCBE7;
-	border: 2px solid #0F5C8E;
-	color: #0F5C8E;
-	font-weight: bold;
-}
-
-.mysupport_tab_technical a {
-	color: #0F5C8E;
-}
-
-.mysupport_tab_hold {
-	background: #FFF6BF;
-	border: 2px solid #FFB90F;
-	color: #FFB90F;
-	font-weight: bold;
-}
-
-.mysupport_tab_hold a {
-	color: #FFB90F;
-}
-
-.mysupport_tab_best_answer {
-	background: #D6ECA6;
-	border: 2px solid #8DC93E;
-	color: #8DC93E;
-	font-weight: bold;
-}
-
-.mysupport_tab_best_answer a {
-	color: #8DC93E;
-}
-
-.mysupport_tab_misc {
-	background: #EFEFEF;
-	border: 2px solid #555555;
-	color: #555555;
-	font-weight: bold;
-}
-
-.mysupport_tab_misc a {
-	color: #555555;
+.mysupport_bar_technical {
+	background: blue;
+	height: 10px;
 }
 
 .mysupport_bar_solved {
@@ -308,17 +234,12 @@ function mysupport_do_activate()
 	height: 10px;
 }
 
-.mysupport_bar_technical {
-	background: blue;
-	height: 10px;
-}
-
 .mysupport_bestanswer_highlight {
-	background: #D6ECA6;
+	background: #D6ECA6 !important;
 }
 
 .mysupport_staff_highlight {
-	background: #E6E8FA;
+	background: #E6E8FA !important;
 }
 
 .usercp_nav_support_threads {

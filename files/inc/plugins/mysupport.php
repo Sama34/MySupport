@@ -1,8 +1,9 @@
 <?php
 /**
- * MySupport 0.4
+ * MySupport 1.8.0
 
  * Copyright 2010 Matthew Rogowski
+ * https://matt.rogow.ski/
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,8 +24,8 @@ if(!defined("IN_MYBB"))
 	exit;
 }
 
-define("MYSUPPORT_VERSION", "0.5");
-define("MYSUPPORT_VERSION_CODE", 05);
+define("MYSUPPORT_VERSION", "1.8");
+define("MYSUPPORT_VERSION_CODE", 1800);
 //define('MYSUPPORT_FORCE_UPDATE', 1);
 
 $plugins->add_hook("admin_config_action_handler", "mysupport_admin_config_action_handler");
@@ -248,7 +249,7 @@ function mysupport_showthread()
 							$text = $lang->sprintf($lang->markas_link, $lang->solved);
 							$class = "mysupport_tab_solved";
 							$url = $mybb->settings['bburl']."/showthread.php?action=mysupport&amp;action=mysupport&amp;status=1&amp;tid={$tid}&amp;my_post_key={$mybb->post_code}";
-							eval("\$mysupport_options .= \"".$templates->get('mysupport_tab')."\";");
+							$mysupport_options .= eval($templates->render('mysupport_tab'));
 						}
 						++$count;
 					}
@@ -269,7 +270,7 @@ function mysupport_showthread()
 							$text = $lang->sprintf($lang->markas_link, $lang->solved_close);
 							$class = "mysupport_tab_solved";
 							$url = $mybb->settings['bburl']."/showthread.php?action=mysupport&amp;action=mysupport&amp;status=3&amp;tid={$tid}&amp;my_post_key={$mybb->post_code}";
-							eval("\$mysupport_options .= \"".$templates->get('mysupport_tab')."\";");
+							$mysupport_options .= eval($templates->render('mysupport_tab'));
 						}
 						++$count;
 					}
@@ -296,7 +297,7 @@ function mysupport_showthread()
 								$text = $lang->sprintf($lang->markas_link, $lang->technical);
 								$class = "mysupport_tab_technical";
 								$url = $mybb->settings['bburl']."/showthread.php?action=mysupport&amp;action=mysupport&amp;status=2&amp;tid={$tid}&amp;my_post_key={$mybb->post_code}";
-								eval("\$mysupport_options .= \"".$templates->get('mysupport_tab')."\";");
+								$mysupport_options .= eval($templates->render('mysupport_tab'));
 							}
 						}
 						else
@@ -314,7 +315,7 @@ function mysupport_showthread()
 								$text = $lang->sprintf($lang->markas_link, $lang->not_technical);
 								$class = "mysupport_tab_technical";
 								$url = $mybb->settings['bburl']."/showthread.php?action=mysupport&amp;action=mysupport&amp;status=4&amp;tid={$tid}&amp;my_post_key={$mybb->post_code}";
-								eval("\$mysupport_options .= \"".$templates->get('mysupport_tab')."\";");
+								$mysupport_options .= eval($templates->render('mysupport_tab'));
 							}
 						}
 						++$count;
@@ -339,7 +340,7 @@ function mysupport_showthread()
 						$text = $lang->sprintf($lang->markas_link, $lang->not_solved);
 						$class = "mysupport_tab_not_solved";
 						$url = $mybb->settings['bburl']."/showthread.php?action=mysupport&amp;action=mysupport&amp;status=0&amp;tid={$tid}&amp;my_post_key={$mybb->post_code}";
-						eval("\$mysupport_options .= \"".$templates->get('mysupport_tab')."\";");
+						$mysupport_options .= eval($templates->render('mysupport_tab'));
 					}
 					++$count;
 				}
@@ -382,7 +383,7 @@ function mysupport_showthread()
 					$text = $lang->jump_to_bestanswer_tab;
 					$class = "mysupport_tab_best_answer";
 					$url = $mybb->settings['bburl']."/".get_post_link($post, $tid)."#pid".$post;
-					eval("\$mysupport_options .= \"".$templates->get('mysupport_tab')."\";");
+					$mysupport_options .= eval($templates->render('mysupport_tab'));
 				}
 			}
 
@@ -417,7 +418,7 @@ function mysupport_showthread()
 							$class = "mysupport_tab_hold";
 							$url = $mybb->settings['bburl']."/showthread.php?action=mysupport&amp;action=mysupport&amp;onhold=1&amp;tid={$tid}&amp;my_post_key={$mybb->post_code}";
 						}
-						eval("\$mysupport_options .= \"".$templates->get('mysupport_tab')."\";");
+						$mysupport_options .= eval($templates->render('mysupport_tab'));
 					}
 				}
 			}
@@ -573,7 +574,7 @@ function mysupport_showthread()
 				$class = "mysupport_tab_misc";
 				$url = 'javascript:void(0);';
 				$onclick = ' onclick="MyBB.popupWindow(\''.$thread_url.'&ajax=1\', null, true); return false;"';
-				eval("\$mysupport_options .= \"".$templates->get('mysupport_tab')."\";");
+				$mysupport_options .= eval($templates->render('mysupport_tab'));
 			}
 		}
 		else
@@ -581,7 +582,7 @@ function mysupport_showthread()
 			$text = $lang->issupportthread_mark_as_support_thread;
 			$class = "mysupport_tab_misc";
 			$url = $mybb->settings['bburl']."/showthread.php?action=mysupport&amp;issupportthread=1&amp;tid={$tid}&amp;my_post_key={$mybb->post_code}";
-			eval("\$mysupport_options .= \"".$templates->get('mysupport_tab')."\";");
+			$mysupport_options .= eval($templates->render('mysupport_tab'));
 		}
 
 		if($mybb->input['mysupport_full'])
@@ -591,14 +592,14 @@ function mysupport_showthread()
 			{
 				if($mybb->input['ajax'] == 1)
 				{
-					eval("\$mysupport_options = \"".$templates->get('mysupport_form_ajax', 1, 0)."\";");
+					$mysupport_options = eval($templates->render('mysupport_form_ajax', true, false));
 					// this is an AJAX request, echo and exit, GO GO GO
 					echo $mysupport_options;
 					exit;
 				}
 				else
 				{
-					eval("\$mysupport_options = \"".$templates->get('mysupport_form')."\";");
+					$mysupport_options = eval($templates->render('mysupport_form'));
 				}
 			}
 		}
@@ -1119,11 +1120,11 @@ function mysupport_threadlist_thread()
 		{
 			if($thread['assign'] == $mybb->user['uid'])
 			{
-				eval("\$mysupport_assigned = \"".$templates->get('mysupport_assigned_toyou')."\";");
+				$mysupport_assigned = eval($templates->render('mysupport_assigned_toyou'));
 			}
 			else
 			{
-				eval("\$mysupport_assigned = \"".$templates->get('mysupport_assigned')."\";");
+				$mysupport_assigned = eval($templates->render('mysupport_assigned'));
 			}
 		}
 
@@ -1134,7 +1135,7 @@ function mysupport_threadlist_thread()
 				$post = intval($thread['bestanswer']);
 				$jumpto_bestanswer_url = get_post_link($post, $tid)."#pid".$post;
 				$bestanswer_image = "mysupport_bestanswer.gif";
-				eval("\$mysupport_bestanswer = \"".$templates->get('mysupport_jumpto_bestanswer')."\";");
+				$mysupport_bestanswer = eval($templates->render('mysupport_jumpto_bestanswer'));
 			}
 		}
 	}
@@ -1219,7 +1220,7 @@ function mysupport_inline_thread_moderation()
 		}
 	}
 
-	eval("\$mysupport_inline_thread_moderation = \"".$templates->get('mysupport_inline_thread_moderation')."\";");
+	$mysupport_inline_thread_moderation = eval($templates->render('mysupport_inline_thread_moderation'));
 }
 
 // perform inline thread moderation on multiple threads
@@ -1612,7 +1613,7 @@ function mysupport_postbit(&$post)
 						$bestanswer_desc = $lang->bestanswer_img_alt;
 					}
 
-					eval("\$post['mysupport_bestanswer'] = \"".$templates->get('mysupport_bestanswer')."\";");
+					$post['mysupport_bestanswer'] = eval($templates->render('mysupport_bestanswer'));
 				}
 			}
 
@@ -1647,12 +1648,12 @@ function mysupport_postbit(&$post)
 						$denied_text .= ": ".htmlspecialchars_uni($support_denial_reasons[$post['deniedsupportreason']]);
 					}
 					$denied_text .= " ".$lang->denied_support_click_to_edit_revoke;
-					eval("\$post['mysupport_deny_support_post'] = \"".$templates->get('mysupport_deny_support_post_linked')."\";");
+					$post['mysupport_deny_support_post'] = eval($templates->render('mysupport_deny_support_post_linked'));
 				}
 				else
 				{
 					$denied_text_desc = $lang->denied_support;
-					eval("\$post['mysupport_deny_support_post'] = \"".$templates->get('mysupport_deny_support_post')."\";");
+					$post['mysupport_deny_support_post'] = eval($templates->render('mysupport_deny_support_post'));
 				}
 			}
 			else
@@ -1664,7 +1665,7 @@ function mysupport_postbit(&$post)
 					if(!(mysupport_usergroup("canmarksolved", $post_groups) || is_moderator($forum['fid'], "", $post['uid'])))
 					{
 						$denied_text_desc = $lang->sprintf($lang->deny_support_to, htmlspecialchars_uni($post['username']));
-						eval("\$post['mysupport_deny_support_post'] = \"".$templates->get('mysupport_deny_support_post_linked')."\";");
+						$post['mysupport_deny_support_post'] = eval($templates->render('mysupport_deny_support_post_linked'));
 					}
 				}
 			}
@@ -1731,7 +1732,7 @@ function mysupport_profile()
 
 	if($something_to_show)
 	{
-		eval("\$mysupport_info = \"".$templates->get('mysupport_member_profile')."\";");
+		$mysupport_info = eval($templates->render('mysupport_member_profile'));
 	}
 }
 
@@ -1828,7 +1829,7 @@ function mysupport_notices()
 
 				if($technical_count_global > 0)
 				{
-					eval("\$mysupport_tech_notice = \"".$templates->get('mysupport_notice')."\";");
+					$mysupport_tech_notice = eval($templates->render('mysupport_notice'));
 				}
 			}
 			// it's only showing in the relevant forums, if necessary
@@ -1847,7 +1848,7 @@ function mysupport_notices()
 				if(!empty($fid) && $technical_count_forum > 0)
 				{
 					$notice_text = $lang->sprintf($lang->technical_forum, intval($technical_count_forum), $threads_text);
-					eval("\$mysupport_tech_notice = \"".$templates->get('mysupport_notice')."\";");
+					$mysupport_tech_notice = eval($templates->render('mysupport_notice'));
 				}
 			}
 		}
@@ -1886,7 +1887,7 @@ function mysupport_notices()
 					$notice_text = $lang->sprintf($lang->assign_global, intval($assigned), $threads_text);
 				}
 
-				eval("\$mysupport_assign_notice = \"".$templates->get('mysupport_notice')."\";");
+				$mysupport_assign_notice = eval($templates->render('mysupport_notice'));
 			}
 		}
 	}
@@ -2095,7 +2096,7 @@ function mysupport_thread_list()
 						}
 					}
 
-					eval("\$stats = \"".$templates->get('mysupport_threadlist_stats')."\";");
+					$stats = eval($templates->render('mysupport_threadlist_stats'));
 				}
 			}
 		}
@@ -2296,7 +2297,7 @@ function mysupport_thread_list()
 				$lastposttime = my_date($mybb->settings['timeformat'], intval($thread['lastpost']));
 				$lastposterlink = build_profile_link(htmlspecialchars_uni($thread['lastposter']), intval($thread['lastposteruid']));
 
-				eval("\$threads .= \"".$templates->get("mysupport_threadlist_thread")."\";");
+				$threads .= eval($templates->render('mysupport_threadlist_thread'));
 			}
 		}
 
@@ -2331,7 +2332,7 @@ function mysupport_thread_list()
 					$view_all_url = "usercp.php?action=supportthreads";
 				}
 			}
-			eval("\$view_all = \"".$templates->get("mysupport_threadlist_footer")."\";");
+			$view_all = eval($templates->render('mysupport_threadlist_footer'));
 		}
 		// if there's no forum in the URL, just get the standard table heading
 		else
@@ -2391,11 +2392,11 @@ function mysupport_thread_list()
 		//if
 		$threadlist_filter_form .= "</form>";
 
-		eval("\$threads_list = \"".$templates->get("mysupport_threadlist_list")."\";");
+		$threads_list = eval($templates->render('mysupport_threadlist_list'));
 		// we only want to output the page if we've got an action; i.e. we're not viewing the list on the User CP home page
 		if($mybb->input['action'])
 		{
-			eval("\$threads_page = \"".$templates->get("mysupport_threadlist")."\";");
+			$threads_page = eval($templates->render('mysupport_threadlist'));
 			output_page($threads_page);
 		}
 	}
@@ -2606,8 +2607,8 @@ function mysupport_modcp_support_denial()
 			}
 			$deniedreasons .= "</select>\n";
 
-			eval("\$deny_support = \"".$templates->get('mysupport_deny_support_deny')."\";");
-			eval("\$deny_support_page = \"".$templates->get('mysupport_deny_support')."\";");
+			$deny_support = eval($templates->render('mysupport_deny_support_deny'));
+			$deny_support_page = eval($templates->render('mysupport_deny_support'));
 			output_page($deny_support_page);
 		}
 		else
@@ -2670,7 +2671,7 @@ function mysupport_modcp_support_denial()
 					{
 						$support_denial_reason = $denieduser['support_denied_reason'];
 					}
-					eval("\$denied_users .= \"".$templates->get('mysupport_deny_support_list_user')."\";");
+					$denied_users .= eval($templates->render('mysupport_deny_support_list_user'));
 				}
 			}
 			else
@@ -2678,8 +2679,8 @@ function mysupport_modcp_support_denial()
 				$denied_users = "<tr><td class=\"trow1\" align=\"center\" colspan=\"5\">{$lang->support_denial_no_users}</td></tr>";
 			}
 
-			eval("\$deny_support = \"".$templates->get('mysupport_deny_support_list')."\";");
-			eval("\$deny_support_page = \"".$templates->get('mysupport_deny_support')."\";");
+			$deny_support = eval($templates->render('mysupport_deny_support_list'));
+			$deny_support_page = eval($templates->render('mysupport_deny_support'));
 			output_page($deny_support_page);
 		}
 	}
@@ -2712,7 +2713,7 @@ function mysupport_usercp_options()
 				}
 			}
 
-			eval("\$mysupport_usercp_options = \"".$templates->get('mysupport_usercp_options')."\";");
+			$mysupport_usercp_options = eval($templates->render('mysupport_usercp_options'));
 		}
 	}
 }
@@ -2748,7 +2749,7 @@ function mysupport_navoption()
 			$nav_link = "modcp.php?action=technicalthreads";
 			$nav_text = $lang->thread_list_title_tech;
 			// we need to eval this template now to generate the nav row with the correct details in it
-			eval("\$mysupport_nav_option .= \"".$templates->get("mysupport_nav_option")."\";");
+			$mysupport_nav_option .= eval($templates->render('mysupport_nav_option'));
 			$something_to_show = true;
 		}
 		// is support denial enabled?
@@ -2759,7 +2760,7 @@ function mysupport_navoption()
 			$nav_link = "modcp.php?action=supportdenial";
 			$nav_text = $lang->support_denial;
 			// we need to eval this template now to generate the nav row with the correct details in it
-			eval("\$mysupport_nav_option .= \"".$templates->get("mysupport_nav_option")."\";");
+			$mysupport_nav_option .= eval($templates->render('mysupport_nav_option'));
 			$something_to_show = true;
 		}
 
@@ -2787,7 +2788,7 @@ function mysupport_navoption()
 			$nav_link = "usercp.php?action=supportthreads";
 			$nav_text = $lang->thread_list_title_solved;
 			// add to the code for the option
-			eval("\$mysupport_nav_option .= \"".$templates->get("mysupport_nav_option")."\";");
+			$mysupport_nav_option .= eval($templates->render('mysupport_nav_option'));
 			$something_to_show = true;
 		}
 		// is assigning threads enabled?
@@ -2798,7 +2799,7 @@ function mysupport_navoption()
 			$nav_link = "usercp.php?action=assignedthreads";
 			$nav_text = $lang->thread_list_title_assign;
 			// add to the code for the option
-			eval("\$mysupport_nav_option .= \"".$templates->get("mysupport_nav_option")."\";");
+			$mysupport_nav_option .= eval($templates->render('mysupport_nav_option'));
 			$something_to_show = true;
 		}
 
@@ -4209,7 +4210,7 @@ function mysupport_get_display_status($status, $onhold = 0, $statustime = 0, $th
 				$status_title = $lang->onhold." - ".$status_title;
 			}
 
-			eval("\$mysupport_status = \"".$templates->get('mysupport_status_text')."\";");
+			$mysupport_status = eval($templates->render('mysupport_status_text'));
 		}
 		else
 		{
@@ -4237,7 +4238,7 @@ function mysupport_get_display_status($status, $onhold = 0, $statustime = 0, $th
 				$status_title = $lang->onhold." - ".$status_title;
 			}
 
-			eval("\$mysupport_status = \"".$templates->get('mysupport_status_image')."\";");
+			$mysupport_status = eval($templates->render('mysupport_status_image'));
 		}
 
 		return $mysupport_status;

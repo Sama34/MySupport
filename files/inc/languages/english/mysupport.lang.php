@@ -1,9 +1,21 @@
 <?php
 /**
- * MySupport 0.4 - Language File
- * � MattRogowski 2010
- * http://mattrogowski.co.uk
- * You may edit for your own personal forum but must not redistribute it in any form without my permission.
+ * MySupport 1.8.0 - Language File
+
+ * Copyright 2010 Matthew Rogowski
+ * https://matt.rogow.ski/
+
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+
+ ** http://www.apache.org/licenses/LICENSE-2.0
+
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
 **/
 
 $l['mysupport'] = "MySupport";
@@ -216,4 +228,3 @@ $l['mysupport_ago'] = "ago";
 
 $l['update'] = "Update";
 $l['close_options'] = "Close Options";
-?>

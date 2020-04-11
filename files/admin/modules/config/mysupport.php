@@ -1,8 +1,9 @@
 <?php
 /**
- * MySupport 0.4 - Admin File
+ * MySupport 1.8.0 - Admin File
 
  * Copyright 2010 Matthew Rogowski
+ * https://matt.rogow.ski/
 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
