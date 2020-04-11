@@ -24,310 +24,13 @@ if(!defined("IN_MYBB"))
 	exit;
 }
 
+// rebuild the caches
+$cache->update_forums();
+$cache->update_usergroups();
+
 $page->add_breadcrumb_item($lang->mysupport, "index.php?module=config-mysupport");
 
-if($mybb->input['action'] == "do_general")
-{
-	if(!verify_post_check($mybb->input['my_post_key']))
-	{
-		flash_message($lang->invalid_post_verify_key2, 'error');
-		admin_redirect("index.php?module=config-mysupport&action=general");
-	}
-
-	// reset the forum settings
-	$update = array(
-		"mysupport" => 0,
-		"mysupportmove" => 0
-	);
-	$db->update_query("forums", $update);
-
-	// reset the usergroup settings
-	$update = array(
-		"canmarksolved" => 0
-	);
-	$db->update_query("usergroups", $update);
-
-	$new_mysupport_forums = "";
-	if(empty($mybb->input['mysupport_forums']))
-	{
-		$mybb->input['mysupport_forums'] = array();
-	}
-	$new_mysupport_forums = implode(",", array_map("intval", $mybb->input['mysupport_forums']));
-	if(!empty($new_mysupport_forums))
-	{
-		$update = array(
-			"mysupport" => 1
-		);
-		$db->update_query("forums", $update, "fid IN (" . $db->escape_string($new_mysupport_forums) . ")");
-	}
-
-	$mysupportdenial_forums = "";
-	if(empty($mybb->input['mysupportdenial_forums']))
-	{
-		$mybb->input['mysupportdenial_forums'] = array();
-	}
-	$mysupportdenial_forums = implode(",", array_map("intval", $mybb->input['mysupportdenial_forums']));
-
-	$db->update_query('forums', array('mysupportdenial' => 0));
-	if(!empty($mysupportdenial_forums))
-	{
-		$update = array(
-			"mysupportdenial" => 1
-		);
-		$db->update_query("forums", $update, "fid IN (" . $db->escape_string($mysupportdenial_forums) . ")");
-	}
-	
-	$new_mysupport_move_forum = intval($mybb->input['mysupport_move_forum']);
-	if($new_mysupport_move_forum == -1)
-	{
-		$db->update_query('forums', array('mysupportmove' => 0));
-	}
-	elseif($new_mysupport_move_forum)
-	{
-		$query = $db->simple_select("forums", "type", "fid = '{$new_mysupport_move_forum}'");
-		$type = $db->fetch_field($query, "type");
-		if($type == "f")
-		{
-			$update = array(
-				"mysupportmove" => 1
-			);
-			$db->update_query("forums", $update, "fid = '{$new_mysupport_move_forum}'");
-		}
-		else
-		{
-			$invalid_move_forum = true;
-		}
-	}
-
-	$new_canmarksolved_groups = "";
-	if(empty($mybb->input['mysupport_canmarksolved']))
-	{
-		$mybb->input['mysupport_canmarksolved'] = array();
-	}
-	$new_canmarksolved_groups = implode(",", array_map("intval", $mybb->input['mysupport_canmarksolved']));
-	if(!empty($new_canmarksolved_groups))
-	{
-		$update = array(
-			"canmarksolved" => 1
-		);
-		$db->update_query("usergroups", $update, "gid IN (" . $db->escape_string($new_canmarksolved_groups) . ")");
-	}
-
-	$new_mysupportmodlog = "";
-	if(empty($mybb->input['mysupportmodlog']))
-	{
-		$mybb->input['mysupportmodlog'] = array();
-	}
-	$new_mysupportmodlog = implode(",", array_map("intval", $mybb->input['mysupportmodlog']));
-	if($new_mysupportmodlog != $mybb->settings['mysupport_modlog'])
-	{
-		$update = array(
-			"value" => $db->escape_string($new_mysupportmodlog)
-		);
-		$db->update_query("settings", $update, "name = 'mysupportmodlog'");
-		rebuild_settings();
-	}
-
-	// rebuild the caches
-	$cache->update_forums();
-	$cache->update_usergroups();
-
-	if($invalid_move_forum === true)
-	{
-		flash_message($lang->error_general_move_forum, 'error');
-	}
-	else
-	{
-		flash_message($lang->success_general, 'success');
-	}
-	admin_redirect("index.php?module=config-mysupport&amp;action=general");
-}
-elseif($mybb->input['action'] == "do_technical")
-{
-	if(!verify_post_check($mybb->input['my_post_key']))
-	{
-		flash_message($lang->invalid_post_verify_key2, 'error');
-		admin_redirect("index.php?module=config-mysupport&action=technical_assign");
-	}
-
-	// reset the usergroup settings
-	$update = array(
-		"canmarktechnical" => 0,
-		"canseetechnotice" => 0
-	);
-	$db->update_query("usergroups", $update);
-
-	$new_canmarktechnical_groups = "";
-	if(empty($mybb->input['mysupport_canmarktechnical']))
-	{
-		$mybb->input['mysupport_canmarktechnical'] = array();
-	}
-	$new_canmarktechnical_groups = implode(",", array_map("intval", $mybb->input['mysupport_canmarktechnical']));
-	if(!empty($new_canmarktechnical_groups))
-	{
-		$update = array(
-			"canmarktechnical" => 1
-		);
-		$db->update_query("usergroups", $update, "gid IN (" . $db->escape_string($new_canmarktechnical_groups) . ")");
-	}
-
-	$new_canseetechnotice_groups = "";
-	if(empty($mybb->input['mysupport_canseetechnotice']))
-	{
-		$mybb->input['mysupport_canseetechnotice'] = array();
-	}
-	$new_canseetechnotice_groups = implode(",", array_map("intval", $mybb->input['mysupport_canseetechnotice']));
-	if(!empty($new_canseetechnotice_groups))
-	{
-		$update = array(
-			"canseetechnotice" => 1
-		);
-		$db->update_query("usergroups", $update, "gid IN (" . $db->escape_string($new_canseetechnotice_groups) . ")");
-	}
-
-	// rebuild the cache
-	$cache->update_usergroups();
-
-	flash_message($lang->success_technical, 'success');
-	admin_redirect("index.php?module=config-mysupport&amp;action=technical_assign");
-}
-elseif($mybb->input['action'] == "do_assign")
-{
-	if(!verify_post_check($mybb->input['my_post_key']))
-	{
-		flash_message($lang->invalid_post_verify_key2, 'error');
-		admin_redirect("index.php?module=config-mysupport&action=technical_assign");
-	}
-
-	// reset the usergroup settings
-	$update = array(
-		"canassign" => 0,
-		"canbeassigned" => 0
-	);
-	$db->update_query("usergroups", $update);
-
-	$new_canassign_groups = "";
-	if(empty($mybb->input['mysupport_canassign']))
-	{
-		$mybb->input['mysupport_canassign'] = array();
-	}
-	$new_canassign_groups = implode(",", array_map("intval", $mybb->input['mysupport_canassign']));
-	if(!empty($new_canassign_groups))
-	{
-		$update = array(
-			"canassign" => 1
-		);
-		$db->update_query("usergroups", $update, "gid IN (" . $db->escape_string($new_canassign_groups) . ")");
-	}
-
-	$new_canbeassigned_groups = "";
-	if(empty($mybb->input['mysupport_canbeassigned']))
-	{
-		$mybb->input['mysupport_canbeassigned'] = array();
-	}
-	$new_canbeassigned_groups = implode(",", array_map("intval", $mybb->input['mysupport_canbeassigned']));
-	if(!empty($new_canbeassigned_groups))
-	{
-		$update = array(
-			"canbeassigned" => 1
-		);
-		$db->update_query("usergroups", $update, "gid IN (" . $db->escape_string($new_canbeassigned_groups) . ")");
-	}
-
-	// rebuild the cache
-	$cache->update_usergroups();
-
-	flash_message($lang->success_assign, 'success');
-	admin_redirect("index.php?module=config-mysupport&amp;action=technical_assign");
-}
-elseif($mybb->input['action'] == "technical_assign")
-{
-	$page->add_breadcrumb_item($lang->technical_assign, "index.php?module=config-mysupport&amp;action=technical_assign");
-
-	$page->output_header($lang->mysupport);
-
-	generate_mysupport_tabs("technical_assign");
-
-	$form = new Form("index.php?module=config-mysupport&amp;action=do_technical", "post");
-	$form_container = new FormContainer($lang->technical_header);
-	$table = new Table;
-
-	$table->construct_header($lang->mysupport);
-
-	$current_canmarktechnical_groups = array();
-	$groups = $cache->read("usergroups");
-	foreach($groups as $group)
-	{
-		if($group['canmarktechnical'] == 1)
-		{
-			$current_canmarktechnical_groups[] = $group['gid'];
-		}
-	}
-	$mysupport_canmarktechnical = $form->generate_group_select('mysupport_canmarktechnical[]', $current_canmarktechnical_groups, array('multiple' => true, 'size' => 5));
-	$form_container->output_row($lang->mysupport_canmarktechnical, '', $mysupport_canmarktechnical);
-
-	if($mybb->settings['mysupport_technicalnotice'] != "off")
-	{
-		$current_canseetechnotice_groups = array();
-		$groups = $cache->read("usergroups");
-		foreach($groups as $group)
-		{
-			if($group['canseetechnotice'] == 1)
-			{
-				$current_canseetechnotice_groups[] = $group['gid'];
-			}
-		}
-		$mysupport_canseetechnotice = $form->generate_group_select('mysupport_canseetechnotice[]', $current_canseetechnotice_groups, array('multiple' => true, 'size' => 5));
-		$form_container->output_row($lang->mysupport_canseetechnotice, '', $mysupport_canseetechnotice);
-	}
-
-	$form_container->end();
-
-	$buttons[] = $form->generate_submit_button($lang->mysupport_submit);
-	$buttons[] = $form->generate_reset_button($lang->reset);
-	$form->output_submit_wrapper($buttons);
-	$form->end();
-	unset($buttons);
-	echo "<br />";
-	$form = new Form("index.php?module=config-mysupport&amp;action=do_assign", "post");
-	$form_container = new FormContainer($lang->assign_header);
-	$table = new Table;
-
-	$table->construct_header($lang->mysupport);
-
-	$current_canassign_groups = array();
-	$groups = $cache->read("usergroups");
-	foreach($groups as $group)
-	{
-		if($group['canassign'] == 1)
-		{
-			$current_canassign_groups[] = $group['gid'];
-		}
-	}
-	$mysupport_canassign = $form->generate_group_select('mysupport_canassign[]', $current_canassign_groups, array('multiple' => true, 'size' => 5));
-	$form_container->output_row($lang->mysupport_canassign, '', $mysupport_canassign);
-
-	$current_canbeassigned_groups = array();
-	$groups = $cache->read("usergroups");
-	foreach($groups as $group)
-	{
-		if($group['canbeassigned'] == 1)
-		{
-			$current_canbeassigned_groups[] = $group['gid'];
-		}
-	}
-	$mysupport_canbeassigned = $form->generate_group_select('mysupport_canbeassigned[]', $current_canbeassigned_groups, array('multiple' => true, 'size' => 5));
-	$form_container->output_row($lang->mysupport_canbeassigned, '', $mysupport_canbeassigned);
-
-	$form_container->end();
-
-	$buttons[] = $form->generate_submit_button($lang->mysupport_submit);
-	$buttons[] = $form->generate_reset_button($lang->reset);
-	$form->output_submit_wrapper($buttons);
-	$form->end();
-	$page->output_footer();
-}
-elseif($mybb->input['action'] == "categories")
+if($mybb->input['action'] == "categories")
 {
 	flash_message($lang->categories_prefixes_redirect, 'success');
 	admin_redirect("index.php?module=config-thread_prefixes");
@@ -401,51 +104,197 @@ elseif($mybb->input['action'] == "do_priorities")
 			admin_redirect("index.php?module=config-mysupport&action=priorities");
 		}
 	}
-	elseif($mybb->input['do'] == "do_groups")
+}
+elseif($mybb->input['action'] == "do_support_denial")
+{
+	if(!verify_post_check($mybb->input['my_post_key']))
 	{
-		// reset the usergroup settings
-		$update = array(
-			"cansetpriorities" => 0,
-			"canseepriorities" => 0
+		flash_message($lang->invalid_post_verify_key2, 'error');
+		admin_redirect("index.php?module=config-mysupport&action=support_denial");
+	}
+
+	if($mybb->input['do'] == "do_add")
+	{
+		if(!strlen(trim($mybb->input['name'])))
+		{
+			flash_message($lang->support_denial_reason_no_name, 'error');
+			admin_redirect("index.php?module=config-mysupport&action=support_denial");
+		}
+		if(!strlen(trim($mybb->input['description'])))
+		{
+			flash_message($lang->support_denial_reason_no_description, 'error');
+			admin_redirect("index.php?module=config-mysupport&action=support_denial");
+		}
+		$insert = array(
+			"name" => $db->escape_string($mybb->input['name']),
+			"description" => $db->escape_string($mybb->input['description']),
+			"type" => "deniedreason"
 		);
-		$db->update_query("usergroups", $update);
+		$db->insert_query("mysupport", $insert);
 
-		$new_cansetpriorities_groups = "";
-		if(empty($mybb->input['mysupport_cansetpriorities']))
+		mysupport_cache("deniedreasons");
+
+		flash_message($lang->support_denial_reason_added, 'success');
+		admin_redirect("index.php?module=config-mysupport&action=support_denial");
+	}
+	elseif($mybb->input['do'] == "do_edit")
+	{
+		$drid = intval($mybb->input['drid']);
+		if(!strlen(trim($mybb->input['name'])))
 		{
-			$mybb->input['mysupport_cansetpriorities'] = array();
+			flash_message($lang->support_denial_reason_no_name, 'error');
+			admin_redirect("index.php?module=config-mysupport&action=support_denial&do=edit&drid={$drid}");
 		}
-		$new_cansetpriorities_groups = implode(",", array_map("intval", $mybb->input['mysupport_cansetpriorities']));
-		if(!empty($new_cansetpriorities_groups))
+		if(!strlen(trim($mybb->input['description'])))
 		{
+			flash_message($lang->support_denial_reason_no_description, 'error');
+			admin_redirect("index.php?module=config-mysupport&action=support_denial&do=edit&drid={$drid}");
+		}
+		$update = array(
+			"name" => $db->escape_string($mybb->input['name']),
+			"description" => $db->escape_string($mybb->input['description'])
+		);
+		$db->update_query("mysupport", $update, "mid = '{$drid}'");
+
+		mysupport_cache("deniedreasons");
+
+		flash_message($lang->support_denial_reason_edited, 'success');
+		admin_redirect("index.php?module=config-mysupport&action=support_denial");
+	}
+	elseif($mybb->input['do'] == "do_delete")
+	{
+		if($mybb->input['no'])
+		{
+			admin_redirect("index.php?module=config-mysupport&action=support_denial");
+		}
+		else
+		{
+			$drid = intval($mybb->input['drid']);
 			$update = array(
-				"cansetpriorities" => 1
+				"deniedsupportreason" => 0
 			);
-			$db->update_query("usergroups", $update, "gid IN (" . $db->escape_string($new_cansetpriorities_groups) . ")");
-		}
+			$db->update_query("users", $update, "deniedsupportreason = '{$drid}'");
+			$db->delete_query("mysupport", "mid = '{$drid}'");
 
-		$new_canseepriorities_groups = "";
-		if(empty($mybb->input['mysupport_canseepriorities']))
-		{
-			$mybb->input['mysupport_canseepriorities'] = array();
-		}
-		$new_canseepriorities_groups = implode(",", array_map("intval", $mybb->input['mysupport_canseepriorities']));
-		if(!empty($new_canseepriorities_groups))
-		{
-			$update = array(
-				"canseepriorities" => 1
-			);
-			$db->update_query("usergroups", $update, "gid IN (" . $db->escape_string($new_canseepriorities_groups) . ")");
-		}
+			mysupport_cache("deniedreasons");
 
-		// rebuild the cache
-		$cache->update_usergroups();
-
-		flash_message($lang->success_priorities, 'success');
-		admin_redirect("index.php?module=config-mysupport&amp;action=priorities");
+			flash_message($lang->support_denial_reason_deleted, 'success');
+			admin_redirect("index.php?module=config-mysupport&action=support_denial");
+		}
 	}
 }
-elseif($mybb->input['action'] == "priorities")
+elseif($mybb->input['action'] == "support_denial")
+{
+	$page->add_breadcrumb_item($lang->support_denial, "index.php?module=config-mysupport&amp;action=support_denial");
+
+	if($mybb->input['do'] == "edit")
+	{
+		$page->output_header($lang->mysupport);
+
+		generate_mysupport_tabs("support_denial");
+
+		$table = new Table;
+
+		$drid = intval($mybb->input['drid']);
+		$query = $db->simple_select("mysupport", "*", "mid = '{$drid}' AND type = 'deniedreason'");
+		if($db->num_rows($query) != 1)
+		{
+			flash_message($lang->support_denial_reason_invalid, 'error');
+			admin_redirect("index.php?module=config-mysupport&action=support_denial");
+		}
+		else
+		{
+			$deniedreason = $db->fetch_array($query);
+		}
+		$form = new Form("index.php?module=config-mysupport&amp;action=do_support_denial", "post");
+		$form_container = new FormContainer($lang->support_denial_reason_edit);
+
+		$edit_support_denial_reason_name = $form->generate_text_box("name", htmlspecialchars_uni($deniedreason['name']));
+		$form_container->output_row($lang->mysupport_name . " <em>*</em>", '', $edit_support_denial_reason_name);
+
+		$edit_support_denial_reason_description = $form->generate_text_area("description", htmlspecialchars_uni($deniedreason['description']));
+		$form_container->output_row($lang->mysupport_description . " <em>*</em>", $lang->support_denial_reason_description_description, $edit_support_denial_reason_description);
+
+		echo $form->generate_hidden_field("do", "do_edit");
+		echo $form->generate_hidden_field("drid", intval($mybb->input['drid']));
+
+		$form_container->end();
+
+		$buttons[] = $form->generate_submit_button($lang->mysupport_edit_support_denial_reason_submit);
+		$form->output_submit_wrapper($buttons);
+		$form->end();
+	}
+	elseif($mybb->input['do'] == "delete")
+	{
+		$drid = intval($mybb->input['drid']);
+		$query = $db->simple_select("mysupport", "*", "mid = '{$drid}' AND type = 'deniedreason'");
+		if($db->num_rows($query) != 1)
+		{
+			flash_message($lang->support_denial_reason_invalid, 'error');
+			admin_redirect("index.php?module=config-mysupport&action=support_denial");
+		}
+		$query = $db->simple_select("users", "COUNT(*) AS support_denial_reason_count", "deniedsupportreason = '{$drid}'");
+		$support_denial_reason_count = $db->fetch_field($query, "support_denial_reason_count");
+		if($support_denial_reason_count > 0)
+		{
+			$lang->support_denial_reason_delete_confirm .= " " . $lang->sprintf($lang->support_denial_reason_delete_confirm_count, $support_denial_reason_count);
+		}
+		$page->output_confirm_action("index.php?module=config-mysupport&amp;action=do_support_denial&amp;do=do_delete&amp;drid={$drid}", $lang->support_denial_reason_delete_confirm);
+	}
+	else
+	{
+		$page->output_header($lang->mysupport);
+
+		generate_mysupport_tabs("support_denial");
+
+		$table = new Table;
+
+		$query = $db->simple_select("mysupport", "*", "type = 'deniedreason'");
+		if($db->num_rows($query) != 0)
+		{
+			$table->construct_header($lang->mysupport_name);
+			$table->construct_header($lang->mysupport_description);
+			$table->construct_header($lang->controls, array("colspan" => 2, 'class' => 'align_center'));
+
+			while($deniedreason = $db->fetch_array($query))
+			{
+				$table->construct_cell($deniedreason['name'], array('width' => '20%'));
+				$table->construct_cell($deniedreason['description'], array('width' => '50%'));
+				$table->construct_cell("<a href=\"index.php?module=config-mysupport&amp;action=support_denial&amp;do=edit&amp;drid={$deniedreason['mid']}\">{$lang->edit}</a>", array('class' => 'align_center', 'width' => '10%'));
+				$table->construct_cell("<a href=\"index.php?module=config-mysupport&amp;action=support_denial&amp;do=delete&amp;drid={$deniedreason['mid']}\">{$lang->delete}</a>", array('class' => 'align_center', 'width' => '10%'));
+				$table->construct_row();
+			}
+
+			$table->output($lang->support_denial_reason_current);
+		}
+
+		$form = new Form("index.php?module=config-mysupport&amp;action=do_support_denial", "post");
+		$form_container = new FormContainer($lang->support_denial_reason_add);
+
+		$add_support_denial_reason_name = $form->generate_text_box("name");
+		$form_container->output_row($lang->mysupport_name . " <em>*</em>", '', $add_support_denial_reason_name);
+
+		$add_support_denial_reason_description = $form->generate_text_area("description");
+		$form_container->output_row($lang->mysupport_description . " <em>*</em>", $lang->support_denial_reason_description_description, $add_support_denial_reason_description);
+
+		echo $form->generate_hidden_field("do", "do_add");
+
+		$form_container->end();
+
+		$buttons[] = $form->generate_submit_button($lang->mysupport_add_support_denial_reason_submit);
+		$form->output_submit_wrapper($buttons);
+		$form->end();
+	}
+
+	$page->output_footer();
+}
+elseif($mybb->input['action'] == "settings")
+{
+	$gid = mysupport_settings_gid();
+	// redirect to the settings page
+	admin_redirect("index.php?module=config-settings&action=change&gid={$gid}");
+}
+else
 {
 	$page->add_breadcrumb_item($lang->priorities, "index.php?module=config-mysupport&amp;action=priorities");
 
@@ -480,6 +329,12 @@ elseif($mybb->input['action'] == "priorities")
 
 		$edit_priority_style = $form->generate_text_box("style", htmlspecialchars_uni($priority['extra']));
 		$form_container->output_row($lang->priority_style, $lang->priority_style_description, $edit_priority_style);
+
+		$edit_priority_groups = $form->generate_group_select("groups", explode(',', $priority['groups']), array('multiple' => true));
+		$form_container->output_row($lang->priority_groups, $lang->priority_groups_description, $edit_priority_groups);
+
+		$edit_priority_forums = $form->generate_forum_select("forums", explode(',', $priority['forums']), array('multiple' => true));
+		$form_container->output_row($lang->priority_forums, $lang->priority_forums_description, $edit_priority_forums);
 
 		echo $form->generate_hidden_field("do", "do_edit");
 		echo $form->generate_hidden_field("pid", intval($mybb->input['pid']));
@@ -612,398 +467,8 @@ elseif($mybb->input['action'] == "priorities")
 		$buttons[] = $form->generate_submit_button($lang->mysupport_add_priority_submit);
 		$form->output_submit_wrapper($buttons);
 		$form->end();
-
-		echo "\n<br />\n";
-
-		$form = new Form("index.php?module=config-mysupport&amp;action=do_priorities", "post");
-		$form_container = new FormContainer($lang->priorities_header);
-		$table = new Table;
-
-		$table->construct_header($lang->mysupport);
-
-		$current_cansetpriorities_groups = array();
-		$groups = $cache->read("usergroups");
-		foreach($groups as $group)
-		{
-			if($group['cansetpriorities'] == 1)
-			{
-				$current_cansetpriorities_groups[] = $group['gid'];
-			}
-		}
-		$mysupport_cansetpriorities = $form->generate_group_select('mysupport_cansetpriorities[]', $current_cansetpriorities_groups, array('multiple' => true, 'size' => 5));
-		$form_container->output_row($lang->mysupport_cansetpriorities, '', $mysupport_cansetpriorities);
-
-		$current_canseepriorities_groups = array();
-		$groups = $cache->read("usergroups");
-		foreach($groups as $group)
-		{
-			if($group['canseepriorities'] == 1)
-			{
-				$current_canseepriorities_groups[] = $group['gid'];
-			}
-		}
-		$mysupport_canseepriorities = $form->generate_group_select('mysupport_canseepriorities[]', $current_canseepriorities_groups, array('multiple' => true, 'size' => 5));
-		$form_container->output_row($lang->mysupport_canseepriorities, '', $mysupport_canseepriorities);
-
-		echo $form->generate_hidden_field("do", "do_groups");
-
-		$form_container->end();
-
-		unset($buttons);
-		$buttons[] = $form->generate_submit_button($lang->mysupport_submit);
-		$buttons[] = $form->generate_reset_button($lang->reset);
-		$form->output_submit_wrapper($buttons);
-		$form->end();
 	}
 
-	$page->output_footer();
-}
-elseif($mybb->input['action'] == "do_support_denial")
-{
-	if(!verify_post_check($mybb->input['my_post_key']))
-	{
-		flash_message($lang->invalid_post_verify_key2, 'error');
-		admin_redirect("index.php?module=config-mysupport&action=support_denial");
-	}
-
-	if($mybb->input['do'] == "do_add")
-	{
-		if(!strlen(trim($mybb->input['name'])))
-		{
-			flash_message($lang->support_denial_reason_no_name, 'error');
-			admin_redirect("index.php?module=config-mysupport&action=support_denial");
-		}
-		if(!strlen(trim($mybb->input['description'])))
-		{
-			flash_message($lang->support_denial_reason_no_description, 'error');
-			admin_redirect("index.php?module=config-mysupport&action=support_denial");
-		}
-		$insert = array(
-			"name" => $db->escape_string($mybb->input['name']),
-			"description" => $db->escape_string($mybb->input['description']),
-			"type" => "deniedreason"
-		);
-		$db->insert_query("mysupport", $insert);
-
-		mysupport_cache("deniedreasons");
-
-		flash_message($lang->support_denial_reason_added, 'success');
-		admin_redirect("index.php?module=config-mysupport&action=support_denial");
-	}
-	elseif($mybb->input['do'] == "do_edit")
-	{
-		$drid = intval($mybb->input['drid']);
-		if(!strlen(trim($mybb->input['name'])))
-		{
-			flash_message($lang->support_denial_reason_no_name, 'error');
-			admin_redirect("index.php?module=config-mysupport&action=support_denial&do=edit&drid={$drid}");
-		}
-		if(!strlen(trim($mybb->input['description'])))
-		{
-			flash_message($lang->support_denial_reason_no_description, 'error');
-			admin_redirect("index.php?module=config-mysupport&action=support_denial&do=edit&drid={$drid}");
-		}
-		$update = array(
-			"name" => $db->escape_string($mybb->input['name']),
-			"description" => $db->escape_string($mybb->input['description'])
-		);
-		$db->update_query("mysupport", $update, "mid = '{$drid}'");
-
-		mysupport_cache("deniedreasons");
-
-		flash_message($lang->support_denial_reason_edited, 'success');
-		admin_redirect("index.php?module=config-mysupport&action=support_denial");
-	}
-	elseif($mybb->input['do'] == "do_delete")
-	{
-		if($mybb->input['no'])
-		{
-			admin_redirect("index.php?module=config-mysupport&action=support_denial");
-		}
-		else
-		{
-			$drid = intval($mybb->input['drid']);
-			$update = array(
-				"deniedsupportreason" => 0
-			);
-			$db->update_query("users", $update, "deniedsupportreason = '{$drid}'");
-			$db->delete_query("mysupport", "mid = '{$drid}'");
-
-			mysupport_cache("deniedreasons");
-
-			flash_message($lang->support_denial_reason_deleted, 'success');
-			admin_redirect("index.php?module=config-mysupport&action=support_denial");
-		}
-	}
-	elseif($mybb->input['do'] == "do_groups")
-	{
-		// reset the usergroup settings
-		$update = array(
-			"canmanagesupportdenial" => 0
-		);
-		$db->update_query("usergroups", $update);
-
-		$new_canmanagesupportdenial_groups = "";
-		if(empty($mybb->input['mysupport_canmanagesupportdenial']))
-		{
-			$mybb->input['mysupport_canmanagesupportdenial'] = array();
-		}
-		$new_canmanagesupportdenial_groups = implode(",", array_map("intval", $mybb->input['mysupport_canmanagesupportdenial']));
-		if(!empty($new_canmanagesupportdenial_groups))
-		{
-			$update = array(
-				"canmanagesupportdenial" => 1
-			);
-			$db->update_query("usergroups", $update, "gid IN (" . $db->escape_string($new_canmanagesupportdenial_groups) . ")");
-		}
-
-		// rebuild the cache
-		$cache->update_usergroups();
-
-		flash_message($lang->success_support_denial, 'success');
-		admin_redirect("index.php?module=config-mysupport&amp;action=support_denial");
-	}
-}
-elseif($mybb->input['action'] == "support_denial")
-{
-	$page->add_breadcrumb_item($lang->support_denial, "index.php?module=config-mysupport&amp;action=support_denial");
-
-	if($mybb->input['do'] == "edit")
-	{
-		$page->output_header($lang->mysupport);
-
-		generate_mysupport_tabs("support_denial");
-
-		$table = new Table;
-
-		$drid = intval($mybb->input['drid']);
-		$query = $db->simple_select("mysupport", "*", "mid = '{$drid}' AND type = 'deniedreason'");
-		if($db->num_rows($query) != 1)
-		{
-			flash_message($lang->support_denial_reason_invalid, 'error');
-			admin_redirect("index.php?module=config-mysupport&action=support_denial");
-		}
-		else
-		{
-			$deniedreason = $db->fetch_array($query);
-		}
-		$form = new Form("index.php?module=config-mysupport&amp;action=do_support_denial", "post");
-		$form_container = new FormContainer($lang->support_denial_reason_edit);
-
-		$edit_support_denial_reason_name = $form->generate_text_box("name", htmlspecialchars_uni($deniedreason['name']));
-		$form_container->output_row($lang->mysupport_name . " <em>*</em>", '', $edit_support_denial_reason_name);
-
-		$edit_support_denial_reason_description = $form->generate_text_area("description", htmlspecialchars_uni($deniedreason['description']));
-		$form_container->output_row($lang->mysupport_description . " <em>*</em>", $lang->support_denial_reason_description_description, $edit_support_denial_reason_description);
-
-		echo $form->generate_hidden_field("do", "do_edit");
-		echo $form->generate_hidden_field("drid", intval($mybb->input['drid']));
-
-		$form_container->end();
-
-		$buttons[] = $form->generate_submit_button($lang->mysupport_edit_support_denial_reason_submit);
-		$form->output_submit_wrapper($buttons);
-		$form->end();
-	}
-	elseif($mybb->input['do'] == "delete")
-	{
-		$drid = intval($mybb->input['drid']);
-		$query = $db->simple_select("mysupport", "*", "mid = '{$drid}' AND type = 'deniedreason'");
-		if($db->num_rows($query) != 1)
-		{
-			flash_message($lang->support_denial_reason_invalid, 'error');
-			admin_redirect("index.php?module=config-mysupport&action=support_denial");
-		}
-		$query = $db->simple_select("users", "COUNT(*) AS support_denial_reason_count", "deniedsupportreason = '{$drid}'");
-		$support_denial_reason_count = $db->fetch_field($query, "support_denial_reason_count");
-		if($support_denial_reason_count > 0)
-		{
-			$lang->support_denial_reason_delete_confirm .= " " . $lang->sprintf($lang->support_denial_reason_delete_confirm_count, $support_denial_reason_count);
-		}
-		$page->output_confirm_action("index.php?module=config-mysupport&amp;action=do_support_denial&amp;do=do_delete&amp;drid={$drid}", $lang->support_denial_reason_delete_confirm);
-	}
-	else
-	{
-		$page->output_header($lang->mysupport);
-
-		generate_mysupport_tabs("support_denial");
-
-		$table = new Table;
-
-		$query = $db->simple_select("mysupport", "*", "type = 'deniedreason'");
-		if($db->num_rows($query) != 0)
-		{
-			$table->construct_header($lang->mysupport_name);
-			$table->construct_header($lang->mysupport_description);
-			$table->construct_header($lang->controls, array("colspan" => 2, 'class' => 'align_center'));
-
-			while($deniedreason = $db->fetch_array($query))
-			{
-				$table->construct_cell($deniedreason['name'], array('width' => '20%'));
-				$table->construct_cell($deniedreason['description'], array('width' => '50%'));
-				$table->construct_cell("<a href=\"index.php?module=config-mysupport&amp;action=support_denial&amp;do=edit&amp;drid={$deniedreason['mid']}\">{$lang->edit}</a>", array('class' => 'align_center', 'width' => '10%'));
-				$table->construct_cell("<a href=\"index.php?module=config-mysupport&amp;action=support_denial&amp;do=delete&amp;drid={$deniedreason['mid']}\">{$lang->delete}</a>", array('class' => 'align_center', 'width' => '10%'));
-				$table->construct_row();
-			}
-
-			$table->output($lang->support_denial_reason_current);
-		}
-
-		$form = new Form("index.php?module=config-mysupport&amp;action=do_support_denial", "post");
-		$form_container = new FormContainer($lang->support_denial_reason_add);
-
-		$add_support_denial_reason_name = $form->generate_text_box("name");
-		$form_container->output_row($lang->mysupport_name . " <em>*</em>", '', $add_support_denial_reason_name);
-
-		$add_support_denial_reason_description = $form->generate_text_area("description");
-		$form_container->output_row($lang->mysupport_description . " <em>*</em>", $lang->support_denial_reason_description_description, $add_support_denial_reason_description);
-
-		echo $form->generate_hidden_field("do", "do_add");
-
-		$form_container->end();
-
-		$buttons[] = $form->generate_submit_button($lang->mysupport_add_support_denial_reason_submit);
-		$form->output_submit_wrapper($buttons);
-		$form->end();
-
-		echo "<br />";
-
-		$form = new Form("index.php?module=config-mysupport&amp;action=do_support_denial", "post");
-		$form_container = new FormContainer($lang->support_denial_header);
-		$table = new Table;
-
-		$table->construct_header($lang->mysupport);
-
-		$current_canmanagesupportdenial_groups = array();
-		$groups = $cache->read("usergroups");
-		foreach($groups as $group)
-		{
-			if($group['canmanagesupportdenial'] == 1)
-			{
-				$current_canmanagesupportdenial_groups[] = $group['gid'];
-			}
-		}
-		$mysupport_canmanagesupportdenial = $form->generate_group_select('mysupport_canmanagesupportdenial[]', $current_canmanagesupportdenial_groups, array('multiple' => true, 'size' => 5));
-		$form_container->output_row($lang->mysupport_canmanagesupportdenial, '', $mysupport_canmanagesupportdenial);
-
-		echo $form->generate_hidden_field("do", "do_groups");
-
-		$form_container->end();
-
-		unset($buttons);
-		$buttons[] = $form->generate_submit_button($lang->mysupport_submit);
-		$buttons[] = $form->generate_reset_button($lang->reset);
-		$form->output_submit_wrapper($buttons);
-		$form->end();
-	}
-
-	$page->output_footer();
-}
-elseif($mybb->input['action'] == "settings")
-{
-	$gid = mysupport_settings_gid();
-	// redirect to the settings page
-	admin_redirect("index.php?module=config-settings&action=change&gid={$gid}");
-}
-elseif($mybb->input['action'] == "forcedisplaytype")
-{
-	if($mybb->settings['mysupport_displaytype'] == "text")
-	{
-		$update = array(
-			"mysupportdisplayastext" => 1
-		);
-	}
-	else
-	{
-		$update = array(
-			"mysupportdisplayastext" => 0
-		);
-	}
-	$db->update_query("users", $update);
-
-	flash_message($lang->mysupport_display_style_forced, "success");
-	$gid = mysupport_settings_gid();
-	admin_redirect("index.php?module=config-settings&action=change&gid={$gid}");
-}
-else
-{
-	$page->output_header($lang->mysupport);
-
-	generate_mysupport_tabs("general");
-
-	$form = new Form("index.php?module=config-mysupport&amp;action=do_general", "post");
-	$form_container = new FormContainer($lang->general_header);
-	$table = new Table;
-
-	$table->construct_header($lang->mysupport);
-
-	$forums = $cache->read('forums');
-
-	$current_mysupport_forums = $current_mysupportdenial_forums = array();
-	$current_mysupport_move_forum = -1;
-	foreach($forums as $forum)
-	{
-		if($forum['mysupport'] == 1)
-		{
-			$current_mysupport_forums[] = $forum['fid'];
-		}
-		if(/*$forum['mysupport'] == 1 && */$forum['mysupportdenial'] == 1)
-		{
-			$current_mysupportdenial_forums[] = $forum['fid'];
-		}
-		if($forum['mysupportmove'] == 1)
-		{
-			$current_mysupport_move_forum = $forum['fid'];
-		}
-	}
-	$mysupport_move_forum = $form->generate_forum_select('mysupport_move_forum', $current_mysupport_move_forum, array('size' => 5));
-	$mysupport_forums = $form->generate_forum_select('mysupport_forums[]', $current_mysupport_forums, array('multiple' => true, 'size' => 5));
-	$form_container->output_row($lang->mysupport_forums, '', $mysupport_forums);
-
-	$mysupportdenial_forums = $form->generate_forum_select('mysupportdenial_forums[]', $current_mysupportdenial_forums, array('multiple' => true, 'size' => 5));
-	$form_container->output_row($lang->mysupportdenial_forums, $lang->mysupportdenial_forums_desc, $mysupportdenial_forums);
-
-	$mysupport_move_forum = $form->generate_forum_select('mysupport_move_forum', $current_mysupport_move_forum, array('main_option' => $lang->none));
-	$form_container->output_row($lang->mysupport_move_forum, $lang->mysupport_move_forum_desc, $mysupport_move_forum);
-
-	$current_canmarksolved_groups = array();
-	$groups = $cache->read("usergroups");
-	foreach($groups as $group)
-	{
-		if($group['canmarksolved'] == 1)
-		{
-			$current_canmarksolved_groups[] = $group['gid'];
-		}
-	}
-	$mysupport_canmarksolved = $form->generate_group_select('mysupport_canmarksolved[]', $current_canmarksolved_groups, array('multiple' => true, 'size' => 5));
-	$form_container->output_row($lang->mysupport_canmarksolved, '', $mysupport_canmarksolved);
-
-	$mysupportmodlog = explode(",", $mybb->settings['mysupport_modlog']);
-	$mysupportmodlog_list = array(
-		0 => $lang->mysupport_mod_log_action_0,
-		1 => $lang->mysupport_mod_log_action_1,
-		2 => $lang->mysupport_mod_log_action_2,
-		// yes, it skips 3 on purpose
-		4 => $lang->mysupport_mod_log_action_4,
-		5 => $lang->mysupport_mod_log_action_5,
-		6 => $lang->mysupport_mod_log_action_6,
-		7 => $lang->mysupport_mod_log_action_7,
-		8 => $lang->mysupport_mod_log_action_8,
-		9 => $lang->mysupport_mod_log_action_9,
-		10 => $lang->mysupport_mod_log_action_10,
-		11 => $lang->mysupport_mod_log_action_11,
-		12 => $lang->mysupport_mod_log_action_12,
-		13 => $lang->mysupport_mod_log_action_13
-	);
-	$mysupport_modlog = $form->generate_select_box("mysupportmodlog[]", $mysupportmodlog_list, $mysupportmodlog, array("multiple" => true, "size" => 7));
-	$form_container->output_row($lang->mysupport_what_to_log, $lang->mysupport_what_to_log_desc, $mysupport_modlog);
-
-	$form_container->end();
-
-	$buttons[] = $form->generate_submit_button($lang->mysupport_submit);
-	$buttons[] = $form->generate_reset_button($lang->reset);
-	$form->output_submit_wrapper($buttons);
-	$form->end();
 	$page->output_footer();
 }
 
@@ -1017,21 +482,6 @@ function generate_mysupport_tabs($selected)
 	global $lang, $page;
 
 	$sub_tabs = array();
-	$sub_tabs['general'] = array(
-		'title' => $lang->general,
-		'link' => "index.php?module=config-mysupport&amp;action=general",
-		'description' => $lang->general_nav
-	);
-	$sub_tabs['technical_assign'] = array(
-		'title' => $lang->technical_assign,
-		'link' => "index.php?module=config-mysupport&amp;action=technical_assign",
-		'description' => $lang->technical_assign_nav
-	);
-	$sub_tabs['categories'] = array(
-		'title' => $lang->categories,
-		'link' => "index.php?module=config-mysupport&amp;action=categories",
-		'description' => $lang->categories_nav
-	);
 	$sub_tabs['priorities'] = array(
 		'title' => $lang->priorities,
 		'link' => "index.php?module=config-mysupport&amp;action=priorities",
@@ -1041,6 +491,11 @@ function generate_mysupport_tabs($selected)
 		'title' => $lang->support_denial,
 		'link' => "index.php?module=config-mysupport&amp;action=support_denial",
 		'description' => $lang->support_denial_nav
+	);
+	$sub_tabs['categories'] = array(
+		'title' => $lang->categories,
+		'link' => "index.php?module=config-mysupport&amp;action=categories",
+		'description' => $lang->categories_nav
 	);
 	$sub_tabs['settings'] = array(
 		'title' => $lang->mysupport_settings,

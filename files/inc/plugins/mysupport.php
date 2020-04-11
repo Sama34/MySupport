@@ -28,34 +28,6 @@ define("MYSUPPORT_VERSION", "1.8");
 define("MYSUPPORT_VERSION_CODE", 1800);
 //define('MYSUPPORT_FORCE_UPDATE', 1);
 
-$plugins->add_hook("admin_config_action_handler", "mysupport_admin_config_action_handler");
-$plugins->add_hook("admin_config_menu", "mysupport_admin_config_menu");
-$plugins->add_hook("admin_config_permissions", "mysupport_admin_config_permissions");
-$plugins->add_hook("admin_config_plugins_activate_commit", "mysupport_settings_redirect");
-$plugins->add_hook("admin_page_output_footer", "mysupport_settings_footer");
-$plugins->add_hook("build_friendly_wol_location_end", "mysupport_build_wol");
-$plugins->add_hook("datahandler_post_validate_post", "mysupport_datahandler_post_validate_post");
-$plugins->add_hook("fetch_wol_activity_end", "mysupport_friendly_wol");
-$plugins->add_hook("forumdisplay_start", "mysupport_forumdisplay_searchresults");
-$plugins->add_hook("forumdisplay_thread", "mysupport_threadlist_thread");
-$plugins->add_hook("global_intermediate", "mysupport_notices");
-$plugins->add_hook("member_profile_end", "mysupport_profile");
-$plugins->add_hook("modcp_start", "mysupport_modcp_support_denial");
-$plugins->add_hook("modcp_start", "mysupport_navoption", -10);
-$plugins->add_hook("modcp_start", "mysupport_thread_list");
-$plugins->add_hook("moderation_start", "mysupport_do_inline_thread_moderation");
-$plugins->add_hook("newreply_start", "mysupport_bump_thread_notice");
-$plugins->add_hook("newthread_do_newthread_end", "mysupport_set_is_support_thread");
-$plugins->add_hook("newthread_start", "mysupport_newthread");
-$plugins->add_hook("postbit", "mysupport_postbit");
-$plugins->add_hook("search_results_start", "mysupport_forumdisplay_searchresults");
-$plugins->add_hook("search_results_thread", "mysupport_threadlist_thread");
-$plugins->add_hook("showthread_start", "mysupport_bump_thread_notice");
-$plugins->add_hook("showthread_start", "mysupport_showthread");
-$plugins->add_hook("usercp_menu_built", "mysupport_navoption", -10);
-$plugins->add_hook("usercp_start", "mysupport_thread_list");
-$plugins->add_hook("usercp_start", "mysupport_usercp_options");
-
 global $templatelist;
 if(isset($templatelist))
 {
@@ -69,6 +41,44 @@ $templatelist .= '';
 if(!defined("IN_ADMINCP"))
 {
 	require_once MYBB_ROOT."inc/plugins/mysupport/mysupport.php";
+
+	$plugins->add_hook("build_friendly_wol_location_end", "mysupport_build_wol");
+	$plugins->add_hook("datahandler_post_validate_post", "mysupport_datahandler_post_validate_post");
+	$plugins->add_hook("fetch_wol_activity_end", "mysupport_friendly_wol");
+	$plugins->add_hook("forumdisplay_start", "mysupport_forumdisplay_searchresults");
+	$plugins->add_hook("forumdisplay_thread", "mysupport_threadlist_thread");
+	$plugins->add_hook("global_intermediate", "mysupport_notices");
+	$plugins->add_hook("member_profile_end", "mysupport_profile");
+	$plugins->add_hook("modcp_start", "mysupport_modcp_support_denial");
+	$plugins->add_hook("modcp_start", "mysupport_navoption", -10);
+	$plugins->add_hook("modcp_start", "mysupport_thread_list");
+	$plugins->add_hook("moderation_start", "mysupport_do_inline_thread_moderation");
+	$plugins->add_hook("newreply_start", "mysupport_bump_thread_notice");
+	$plugins->add_hook("newthread_do_newthread_end", "mysupport_set_is_support_thread");
+	$plugins->add_hook("newthread_start", "mysupport_newthread");
+	$plugins->add_hook("postbit", "mysupport_postbit");
+	$plugins->add_hook("search_results_start", "mysupport_forumdisplay_searchresults");
+	$plugins->add_hook("search_results_thread", "mysupport_threadlist_thread");
+	$plugins->add_hook("showthread_start", "mysupport_bump_thread_notice");
+	$plugins->add_hook("showthread_start", "mysupport_showthread");
+	$plugins->add_hook("usercp_menu_built", "mysupport_navoption", -10);
+	$plugins->add_hook("usercp_start", "mysupport_thread_list");
+	$plugins->add_hook("usercp_start", "mysupport_usercp_options");
+}
+else
+{
+	$plugins->add_hook("admin_config_action_handler", "mysupport_admin_config_action_handler");
+	$plugins->add_hook("admin_config_menu", "mysupport_admin_config_menu");
+	$plugins->add_hook("admin_config_permissions", "mysupport_admin_config_permissions");
+	$plugins->add_hook("admin_config_plugins_activate_commit", "mysupport_settings_redirect");
+	$plugins->add_hook("admin_page_output_footer", "mysupport_settings_footer");
+
+	$plugins->add_hook('admin_formcontainer_end', 'mysupport_admin_formcontainer_end');
+	$plugins->add_hook('admin_user_groups_edit_commit', 'mysupport_admin_user_groups_edit_commit');
+
+	$plugins->add_hook('admin_formcontainer_output_row', 'mysupport_admin_formcontainer_output_row');
+	$plugins->add_hook('admin_forum_management_edit_commit', 'mysupport_admin_forum_management_edit_commit');
+	$plugins->add_hook('admin_forum_management_editmod_commit', 'mysupport_admin_forum_management_editmod_commit');
 }
 
 // PLUGINLIBRARY
@@ -177,12 +187,11 @@ function mysupport_settings_gid()
 // redirect to the settings page after activating
 function mysupport_settings_redirect()
 {
-	global $mybb, $db, $lang, $installed;
+	global $mybb, $db, $lang, $installed, $mysupport;
+	$mysupport->lang_load();
 
 	if($installed === true && $mybb->input['plugin'] == "mysupport")
 	{
-		$lang->load("config_mysupport");
-
 		$gid = mysupport_settings_gid();
 
 		flash_message($lang->mysupport_activated, 'success');
@@ -1186,6 +1195,7 @@ function mysupport_inline_thread_moderation()
 		$mysupport_assign = "";
 		$assign_users = mysupport_get_assign_users();
 		// only continue if there's one or more users that can be assigned threads
+		$mysupport_assign .= "<option value=\"mysupport_assign_find\">-- <i>{$lang->my_support_inline_find}</i></option>\n";
 		if(!empty($assign_users))
 		{
 			foreach($assign_users as $assign_userid => $assign_username)
@@ -2893,6 +2903,163 @@ function loadMySupportPeekers()
 	}
 }
 
+// Insert the require code in the group edit page.
+function mysupport_admin_formcontainer_end(&$args)
+{
+	global $run_module, $form_container, $lang, $form, $mybb, $mysupport;
+
+	if($run_module == 'user' && !empty($lang->forums_posts) && $form_container->_title == $lang->forums_posts)
+	{
+		$mysupport->lang_load();
+
+		$mysupport_options = $mysupport_mod_options = array();
+		foreach($mysupport->_db_columns() as $table => $columns)
+		{
+			if($table != 'usergroups')
+			{
+				continue;
+			}
+
+			$modperms = 'mysupport_options';
+			foreach($columns as $field => $definition)
+			{
+				if($field == 'canmanagesupportdenial')
+				{
+					$modperms = 'mysupport_mod_options';
+				}
+
+				$lang_var = 'mysupport_usergroups_'.$field;
+				${$modperms}[] = $form->generate_check_box($field, 1, $lang->$lang_var, array('id' => $field, 'checked' => $mybb->get_input($field, MyBB::INPUT_INT)));
+			}
+		}
+
+		$form_container->output_row($lang->mysupport, '', '<div class="group_settings_bit">'.implode('</div><div class="group_settings_bit">', $mysupport_options).'</div>');
+
+		$form_container->output_row($lang->mysupport_usergroups_moderator, '', '<div class="group_settings_bit">'.implode('</div><div class="group_settings_bit">', $mysupport_mod_options).'</div>');
+	}
+}
+
+// Save group data
+function mysupport_admin_user_groups_edit_commit()
+{
+	global $updated_group, $mybb, $mysupport, $updated_group;
+
+	foreach($mysupport->_db_columns() as $table => $columns)
+	{
+		if($table != 'usergroups')
+		{
+			continue;
+		}
+
+		foreach($columns as $field => $definition)
+		{
+			$updated_group[$field] = $mybb->get_input($field, MyBB::INPUT_INT);
+		}
+	}
+}
+
+function mysupport_admin_formcontainer_output_row(&$args)
+{
+	global $lang, $mybb, $form, $forum_data, $form_container, $mysupport, $mod_data;
+
+	static $done = false;
+
+	if($args['title'] == $lang->forum && $lang->forum && $mybb->get_input('module', MyBB::INPUT_STRING) == 'forum-management' && $mybb->get_input('action', MyBB::INPUT_STRING) == 'editmod')
+	{
+
+		$mysupport->lang_load();
+
+		$mysupport_options = array();
+		foreach($mysupport->_db_columns() as $table => $columns)
+		{
+			if($table != 'moderators')
+			{
+				continue;
+			}
+
+			foreach($columns as $field => $definition)
+			{
+				$lang_var = 'mysupport_moderators_'.$field;
+				$mysupport_options[] = $form->generate_check_box($field, 1, $lang->$lang_var, array('id' => $field, 'checked' => $mod_data[$field]));
+			}
+		}
+
+		$form_container->output_row($lang->mysupport, "", "<div class=\"forum_settings_bit\">".implode("</div><div class=\"forum_settings_bit\">", $mysupport_options)."</div>");
+	}
+
+	if($args['title'] == $lang->misc_options && $lang->misc_options && $mybb->get_input('module', MyBB::INPUT_STRING) == 'forum-management' && $mybb->get_input('action', MyBB::INPUT_STRING) == 'edit' && !$done)
+	{
+		$done = true;
+
+		$mysupport->lang_load();
+
+		$mysupport_options = array();
+		foreach($mysupport->_db_columns() as $table => $columns)
+		{
+			if($table != 'forums')
+			{
+				continue;
+			}
+
+			foreach($columns as $field => $definition)
+			{
+				if($table != 'forums' || $field == 'technicalthreads')
+				{
+					continue;
+				}
+
+				$lang_var = 'mysupport_forums_'.$field;
+				$mysupport_options[] = $form->generate_check_box($field, 1, $lang->$lang_var, array('id' => $field, 'checked' => $forum_data[$field]));
+			}
+		}
+
+		$form_container->output_row($lang->mysupport, "", "<div class=\"forum_settings_bit\">".implode("</div><div class=\"forum_settings_bit\">", $mysupport_options)."</div>");
+	}
+}
+
+// Save forum data
+function mysupport_admin_forum_management_edit_commit()
+{
+	global $mybb, $mysupport, $db, $fid;
+
+	$update_array = array();
+	foreach($mysupport->_db_columns() as $table => $columns)
+	{
+		if($table != 'forums')
+		{
+			continue;
+		}
+
+		foreach($columns as $field => $definition)
+		{
+			$update_array[$field] = $mybb->get_input($field, MyBB::INPUT_INT);
+		}
+	}
+
+	$db->update_query("forums", $update_array, "fid='{$fid}'");
+
+	$mybb->cache->update_forums();
+}
+
+// Save forum data
+function mysupport_admin_forum_management_editmod_commit()
+{
+	global $mybb, $mysupport, $update_array;
+
+	foreach($mysupport->_db_columns() as $table => $columns)
+	{
+		if($table != 'moderators')
+		{
+			continue;
+		}
+
+		foreach($columns as $field => $definition)
+		{
+			$update_array[$field] = $mybb->get_input($field, MyBB::INPUT_INT);
+		}
+	}
+}
+
 function mysupport_admin_config_menu($sub_menu)
 {
 	global $lang;
@@ -3098,6 +3265,7 @@ function mysupport_change_status($thread_info, $status = 0, $multiple = false)
 	}
 
 	$move_fid = "";
+	/*
 	$forums = $cache->read("forums");
 	foreach($forums as $forum)
 	{
@@ -3107,6 +3275,7 @@ function mysupport_change_status($thread_info, $status = 0, $multiple = false)
 			break;
 		}
 	}
+	*/
 	// are we marking it as solved and is it being moved?
 	if(!empty($move_fid) && ($status == 1 || $status == 3))
 	{
@@ -4280,3 +4449,221 @@ function mysupport_get_friendly_status($status = 0)
 
 	return $friendlystatus;
 }
+
+// Our awesome class
+class MySupport
+{
+	// Is the plugin active? Default is false
+	public $plugin_enabled = false;
+
+	// Construct the data (?)
+	function __construct()
+	{
+		global $mybb;
+
+		// Fix: PHP warning on MyBB installation/upgrade
+		if(is_object($cache))
+		{
+			$plugins = $mybb->cache->read('plugins');
+
+			// Is plugin active?
+			$this->plugin_enabled = (bool)$mybb->settings['mysupport_enabled'];
+		}
+	}
+
+	// List of tables
+	function _db_tables()
+	{
+		$tables = array(
+			'mysupport'	=> array(
+				'mid'				=> "SMALLINT(5) NOT NULL AUTO_INCREMENT",
+				'type'				=> "VARCHAR(20) NOT NULL DEFAULT ''",
+				'name'				=> "VARCHAR(255) NOT NULL DEFAULT ''",
+				'description'		=> "VARCHAR(500) NOT NULL DEFAULT ''",
+				'extra'				=> "VARCHAR(255) NOT NULL default ''",
+				'groups'			=> "VARCHAR(255) NOT NULL default ''",
+				'forums'			=> "VARCHAR(255) NOT NULL default ''",
+				'prymary_key'		=> "mid"
+			)
+		);
+
+		return $tables;
+	}
+
+	// List of columns
+	function _db_columns()
+	{
+		$tables = array(
+			'forums'	=> array(
+				'mysupport' => "INT(1) NOT NULL DEFAULT '0'",
+				'mysupportmove' => "INT(1) NOT NULL DEFAULT '1'",
+				'mysupportdenial' => "INT(1) NOT NULL DEFAULT '1'",
+				'technicalthreads' => "INT(5) NOT NULL DEFAULT '0'",
+				'allowsolvestatus' => "INT(1) NOT NULL DEFAULT '1'",
+				'allowtechnicalstatus' => "INT(1) NOT NULL DEFAULT '1'",
+				'allowbestanswerstatus' => "INT(1) NOT NULL DEFAULT '1'",
+				'allowonholdstatus' => "INT(1) NOT NULL DEFAULT '1'",
+				'allowhighlight' => "INT(1) NOT NULL DEFAULT '1'",
+				'allownonsupportthreads' => "INT(1) NOT NULL DEFAULT '0'",
+			),
+			//mysupportmove should probably be left for moderation tools
+			'threads'	=> array(
+				'status' => "INT(1) NOT NULL DEFAULT '0'",
+				'statusuid' => "INT(10) NOT NULL DEFAULT '0'",
+				'statustime' => "INT(10) NOT NULL DEFAULT '0'",
+				'onhold' => "INT(1) NOT NULL DEFAULT '0'",
+				'bestanswer' => "INT(10) NOT NULL DEFAULT '0'",
+				'assign' => "INT(10) NOT NULL DEFAULT '0'",
+				'assignuid' => "INT(10) NOT NULL DEFAULT '0'",
+				'priority' => "INT(5) NOT NULL DEFAULT '0'",
+				'closedbymysupport' => "INT(1) NOT NULL DEFAULT '0'",
+				'issupportthread' => "INT(1) NOT NULL DEFAULT '1'",
+			),
+			'users'	=> array(
+				'assignedthreads' => "VARCHAR(500) NOT NULL DEFAULT ''",
+				'deniedsupport' => "INT(1) NOT NULL DEFAULT '0'",
+				'deniedsupportreason' => "INT(5) NOT NULL DEFAULT '0'",
+				'deniedsupportuid' => "INT(10) NOT NULL DEFAULT '0'",
+				'mysupportdisplayastext' => "INT(1) NOT NULL DEFAULT '0'"
+			),
+			'usergroups'	=> array(
+				'canmarksolved' => "INT(1) NOT NULL DEFAULT '1'",
+				//'canmarktechnical' => "INT(1) NOT NULL DEFAULT '0'",
+				'canseetechnotice' => "INT(1) NOT NULL DEFAULT '1'",
+				//'canassign' => "INT(1) NOT NULL DEFAULT '0'",
+				'canbeassigned' => "INT(1) NOT NULL DEFAULT '1'",
+				//'cansetpriorities' => "INT(1) NOT NULL DEFAULT '0'",
+				'canseepriorities' => "INT(1) NOT NULL DEFAULT '0'",
+				'canmarkbestanswer' => "INT(1) NOT NULL DEFAULT '1'",
+				'canmarkonhold' => "INT(1) NOT NULL DEFAULT '1'",
+				'canmarkasnonsupport' => "INT(1) NOT NULL DEFAULT '0'",
+				'canmanagesupportdenial' => "INT(1) NOT NULL DEFAULT '0'",
+			),
+			// we will use the is_moderator() function to allow moderators run some tools so we leave only tools at least the author will be able to use
+			'moderators'	=> array(
+				'canmarksolved' => "INT(1) NOT NULL DEFAULT '1'",
+				'canmarktechnical' => "INT(1) NOT NULL DEFAULT '1'",
+				'canassign' => "INT(1) NOT NULL DEFAULT '1'",
+				'cansetpriorities' => "INT(1) NOT NULL DEFAULT '1'",
+				'canmanagesupportdenial' => "INT(1) NOT NULL DEFAULT '1'", // this will be forum specific (mods) or all forums (super mods)
+				'canmarkbestanswer' => "INT(1) NOT NULL DEFAULT '1'",
+				'canmarkonhold' => "INT(1) NOT NULL DEFAULT '1'",
+				'canmarkasnonsupport' => "INT(1) NOT NULL DEFAULT '1'",
+			)
+		);
+
+		return $tables;
+	}
+
+	// Verify DB tables
+	function _db_verify_tables()
+	{
+		global $db;
+
+		$collation = $db->build_create_table_collation();
+		foreach($this->_db_tables() as $table => $fields)
+		{
+			if($db->table_exists($table))
+			{
+				foreach($fields as $field => $definition)
+				{
+					if($field == 'prymary_key')
+					{
+						continue;
+					}
+
+					if($db->field_exists($field, $table))
+					{
+						$db->modify_column($table, "`{$field}`", $definition);
+					}
+					else
+					{
+						$db->add_column($table, $field, $definition);
+					}
+				}
+			}
+			else
+			{
+				$query = "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX."{$table}` (";
+				foreach($fields as $field => $definition)
+				{
+					if($field == 'prymary_key')
+					{
+						$query .= "PRIMARY KEY (`{$definition}`)";
+					}
+					else
+					{
+						$query .= "`{$field}` {$definition},";
+					}
+				}
+				$query .= ") ENGINE=MyISAM{$collation};";
+				$db->write_query($query);
+			}
+		}
+	}
+
+	// Verify DB columns
+	function _db_verify_columns()
+	{
+		global $db;
+
+		foreach($this->_db_columns() as $table => $columns)
+		{
+			foreach($columns as $field => $definition)
+			{
+				if($db->field_exists($field, $table))
+				{
+					$db->modify_column($table, "`{$field}`", $definition);
+				}
+				else
+				{
+					$db->add_column($table, $field, $definition);
+				}
+			}
+		}
+	}
+
+	// Verify DB indexes
+	function _db_verify_indexes()
+	{
+	}
+
+	// Load our language file if neccessary
+	function lang_load()
+	{
+		global $lang;
+
+		if(!isset($lang->mysupport))
+		{
+			$lang->load(defined('IN_ADMINCP') ? 'config_mysupport' : 'mysupport');
+		}
+	}
+
+	// Check PL requirements
+	function meets_requirements()
+	{
+		global $PL;
+
+		$info = mysupport_info();
+
+		if(!file_exists(PLUGINLIBRARY))
+		{
+			global $lang;
+			$this->lang_load();
+
+			admin_redirect($lang->sprintf($lang->ougc_customrep_plreq, $info['pl']['url'], $info['pl']['version']));
+		}
+
+		$PL or require_once PLUGINLIBRARY;
+
+		if($PL->version < $info['pl']['version'])
+		{
+			global $lang;
+			$this->lang_load();
+
+			admin_redirect($lang->sprintf($lang->ougc_customrep_plold, $PL->version, $info['pl']['version'], $info['pl']['url']));
+		}
+	}
+}
+
+$GLOBALS['mysupport'] = new MySupport;

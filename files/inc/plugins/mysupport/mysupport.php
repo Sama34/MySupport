@@ -53,9 +53,12 @@ function mysupport_do_install()
 	global $db, $cache, $mysupport_uninstall_confirm_override, $mysupport;
 	$mysupport->meets_requirements();
 
+	$mysupport->_db_verify_tables();
+	$mysupport->_db_verify_columns();
+	$mysupport->_db_verify_indexes();
+
 	// this is so we override the confirmation when trying to uninstall, so we can just run the uninstall code
 	$mysupport_uninstall_confirm_override = true;
-	mysupport_do_uninstall();
 
 	// insert some default priorities
 	$priorities = array();
@@ -126,6 +129,7 @@ function mysupport_do_is_installed()
 function mysupport_do_uninstall()
 {
 	global $mybb, $db, $cache, $mysupport_uninstall_confirm_override, $mysupport, $db, $PL;
+	$mysupport->meets_requirements();
 
 	// this is a check to make sure we want to uninstall
 	// if 'No' was chosen on the confirmation screen, redirect back to the plugins page
@@ -139,8 +143,6 @@ function mysupport_do_uninstall()
 		// or the confirmation is being overridden by the installation function; this is for when mysupport_uninstall() is called at the start of mysupport_install(), we just want to execute the uninstall code at this point
 		if($mybb->request_method == "post" || $mysupport_uninstall_confirm_override === true || $mybb->input['action'] == "delete")
 		{
-			$mysupport->meets_requirements() or $mysupport->admin_redirect($mysupport->message, true);
-
 			// Drop DB entries
 			foreach($mysupport->_db_tables() as $name => $table)
 			{
@@ -168,6 +170,7 @@ function mysupport_do_uninstall()
 
 			$cache->update_forums();
 			$cache->update_usergroups();
+			$cache->update_moderators();
 			$db->delete_query("datacache", "title = 'mysupport'");
 		}
 		// need to show the confirmation
@@ -184,7 +187,7 @@ function mysupport_do_uninstall()
 
 function mysupport_do_activate()
 {
-	global $mysupport, $lang, $PL;
+	global $mysupport, $lang, $PL, $cache;
 	$mysupport->lang_load();
 	$mysupport->meets_requirements();
 
@@ -192,17 +195,17 @@ function mysupport_do_activate()
 	if(defined('MYSUPPORT_FORCE_UPDATE'))
 	{
 
-		mysupport_upgrade();
+		//mysupport_upgrade();
 
-		require_once MYBB_ADMIN_DIR . "inc/functions_themes.php";
+		//require_once MYBB_ADMIN_DIR . "inc/functions_themes.php";
 
-		$db->delete_query("themestylesheets", "name = 'mysupport.css'");
+		//$db->delete_query("themestylesheets", "name = 'mysupport.css'");
 
-		$query = $db->simple_select("themes", "tid");
-		while($tid = $db->fetch_field($query, "tid"))
-		{
-			update_theme_stylesheet_list($tid);
-		}
+		//$query = $db->simple_select("themes", "tid");
+		//while($tid = $db->fetch_field($query, "tid"))
+		//{
+		//	update_theme_stylesheet_list($tid);
+		//}
 
 		exit('Please deactivate the MYSUPPORT_FORCE_UPDATE constant and run the activation again.');
 	}
@@ -278,8 +281,8 @@ text=Text',
 		'displaytypeuserchange'	=> array(
 			'title'			=> $lang->setting_mysupport_displaytypeuserchange,
 			'description'	=> $lang->setting_mysupport_displaytypeuserchange_desc,
-			'optionscode'	=> 'yesno',
-			'value'			=> 1,
+			'optionscode'	=> 'groupselect',
+			'value'			=> -1,
 		),
 		'displayto'	=> array(
 			'title'			=> $lang->setting_mysupport_displayto,
@@ -290,9 +293,9 @@ canmas=Those who can mark as solved
 canmasauthor=Those who can mark as solved and the author of the thread',
 			'value'			=> 'all',
 		),
-		'author'	=> array(
-			'title'			=> $lang->setting_mysupport_author,
-			'description'	=> $lang->setting_mysupport_author_desc,
+		'enablesolvedstatus'	=> array(
+			'title'			=> $lang->setting_mysupport_enablesolvedstatus,
+			'description'	=> $lang->setting_mysupport_enablesolvedstatus_desc,
 			'optionscode'	=> 'yesno',
 			'value'			=> 1,
 		),
@@ -319,12 +322,6 @@ none=No redirect
 forever=Forever',
 			'value'			=> 0,
 		),
-		'unsolve'	=> array(
-			'title'			=> $lang->setting_mysupport_unsolve,
-			'description'	=> $lang->setting_mysupport_unsolve_desc,
-			'optionscode'	=> 'yesno',
-			'value'			=> 0,
-		),
 		'bumpnotice'	=> array(
 			'title'			=> $lang->setting_mysupport_bumpnotice,
 			'description'	=> $lang->setting_mysupport_bumpnotice_desc,
@@ -340,13 +337,13 @@ forever=Forever',
 		'enablebestanswer'	=> array(
 			'title'			=> $lang->setting_mysupport_enablebestanswer,
 			'description'	=> $lang->setting_mysupport_enablebestanswer_desc,
-			'optionscode'	=> 'yesno',
+			'optionscode'	=> 'onoff',
 			'value'			=> 1,
 		),
 		'bestanswerrep'	=> array(
 			'title'			=> $lang->setting_mysupport_bestanswerrep,
 			'description'	=> $lang->setting_mysupport_bestanswerrep_desc,
-			'optionscode'	=> 'text',
+			'optionscode'	=> 'numeric',
 			'value'			=> 1,
 		),
 		'enabletechnical'	=> array(
@@ -403,6 +400,12 @@ specific=Specific',
 2=Enabled - By default, new threads are not support threads',
 			'value'			=> 0,
 		),
+		'enablenotsupportthread'	=> array(
+			'title'			=> $lang->setting_mysupport_enablenotsupportthread,
+			'description'	=> $lang->setting_mysupport_enablenotsupportthread_desc,
+			'optionscode'	=> 'yesno',
+			'value'			=> 1,
+		),
 		'enablesupportdenial'	=> array(
 			'title'			=> $lang->setting_mysupport_enablesupportdenial,
 			'description'	=> $lang->setting_mysupport_enablesupportdenial_desc,
@@ -418,8 +421,22 @@ specific=Specific',
 		'modlog'	=> array(
 			'title'			=> $lang->setting_mysupport_modlog,
 			'description'	=> $lang->setting_mysupport_modlog_desc,
-			'optionscode'	=> 'text',
-			'value'			=> '0,1,2,4,5,6,7,8,9,10,11,12,13',
+			'optionscode'	=> "checkbox
+0={$lang->mysupport_mod_log_action_0}
+1={$lang->mysupport_mod_log_action_1}
+2={$lang->mysupport_mod_log_action_2}
+3={$lang->mysupport_mod_log_action_3}
+4={$lang->mysupport_mod_log_action_4}
+5={$lang->mysupport_mod_log_action_5}
+6={$lang->mysupport_mod_log_action_6}
+7={$lang->mysupport_mod_log_action_7}
+8={$lang->mysupport_mod_log_action_8}
+9={$lang->mysupport_mod_log_action_9}
+10={$lang->mysupport_mod_log_action_10}
+11={$lang->mysupport_mod_log_action_11}
+12={$lang->mysupport_mod_log_action_12}
+13={$lang->mysupport_mod_log_action_13}",
+			'value'			=> '0,1,2,3,4,5,6,7,8,9,10,11,12,13',
 		),
 		'highlightstaffposts'	=> array(
 			'title'			=> $lang->setting_mysupport_highlightstaffposts,
@@ -748,6 +765,12 @@ none=None (Disabled)',
 	mysupport_template_edits(1);
 
 	mysupport_cache("version");
+	mysupport_cache("priorities");
+	mysupport_cache("deniedreasons");
+
+	$cache->update_forums();
+	$cache->update_usergroups();
+	$cache->update_moderators();
 }
 
 function mysupport_do_deactivate()
@@ -778,9 +801,6 @@ function mysupport_upgrade()
 	// only need to run through this if the version has actually changed
 	if(!empty($old_version) && $old_version < MYSUPPORT_VERSION || defined('MYSUPPORT_FORCE_UPDATE'))
 	{
-		// reimport the settings to add any new ones and refresh the current ones
-		mysupport_import_settings();
-
 		$deleted_settings = array();
 		$deleted_templates = array();
 
@@ -814,23 +834,6 @@ function mysupport_upgrade()
 			);
 			$db->update_query("settings", $update, "name = 'mysupportmodlog'");
 			rebuild_settings();
-		}
-
-		if(!empty($deleted_settings))
-		{
-			$deleted_settings = "'" . implode("','", array_map($db->escape_string, $deleted_settings)) . "'";
-			// have to use $db->escape_string above instead of around $deleted_settings directly because otherwise it escapes the ' around the names, which are important
-			$db->delete_query("settings", "name IN ({$deleted_settings})");
-
-			mysupport_update_setting_orders();
-
-			rebuild_settings();
-		}
-		if(!empty($deleted_templates))
-		{
-			$deleted_templates = "'" . implode("','", array_map($db->escape_string, $deleted_templates)) . "'";
-			// have to use $db->escape_string above instead of around $deleted_templates directly because otherwise it escapes the ' around the names, which are important
-			$db->delete_query("templates", "title IN ({$deleted_templates})");
 		}
 
 		// now we can update the cache with the new version
@@ -879,49 +882,6 @@ function mysupport_setting_names()
 
 function mysupport_settings_info()
 {
-}
-
-/**
- * Import the settings.
-**/
-function mysupport_import_settings()
-{
-	global $mybb, $db;
-
-	$settings = mysupport_settings_info();
-	$settings_gid = mysupport_settings_gid();
-
-	foreach($settings as $setting)
-	{
-		// we're updating an existing setting - this would be called during an upgrade
-		if(array_key_exists($setting['name'], $mybb->settings))
-		{
-			// here we want to update the title, description, and options code in case they've changed, but we don't change the value so it doesn't change what people have set
-			$update = array(
-				"title" => $db->escape_string($setting['title']),
-				"description" => $db->escape_string($setting['description']),
-				"optionscode" => $db->escape_string($setting['optionscode'])
-			);
-			$db->update_query("settings", $update, "name = '" . $db->escape_string($setting['name']) . "'");
-		}
-		// we're inserting a new setting - either we're installing, or upgrading and a new setting's been added
-		else
-		{
-			$insert = array(
-				"name" => $db->escape_string($setting['name']),
-				"title" => $db->escape_string($setting['title']),
-				"description" => $db->escape_string($setting['description']),
-				"optionscode" => $db->escape_string($setting['optionscode']),
-				"value" => $db->escape_string($setting['value']),
-				"gid" => intval($settings_gid)
-			);
-			$db->insert_query("settings", $insert);
-		}
-	}
-
-	mysupport_update_setting_orders();
-
-	rebuild_settings();
 }
 
 /**
@@ -1019,198 +979,3 @@ function mysupport_template_edits($type)
 		find_replace_templatesets("newthread", "#".preg_quote('{$mysupport_thread_options}')."#i", '', 0);
 	}
 }
-
-// Our awesome class
-class MySupport
-{
-	// Is the plugin active? Default is false
-	public $plugin_enabled = false;
-
-	// Construct the data (?)
-	function __construct()
-	{
-		global $mybb;
-
-		// Fix: PHP warning on MyBB installation/upgrade
-		if(is_object($cache))
-		{
-			$plugins = $mybb->cache->read('plugins');
-
-			// Is plugin active?
-			$this->plugin_enabled = (bool)$mybb->settings['mysupport_enabled'];
-		}
-	}
-
-	// List of tables
-	function _db_tables()
-	{
-		$tables = array(
-			'mysupport'	=> array(
-				'mid'				=> "SMALLINT(5) NOT NULL AUTO_INCREMENT",
-				'type'				=> "VARCHAR(20) NOT NULL DEFAULT ''",
-				'name'				=> "VARCHAR(255) NOT NULL DEFAULT ''",
-				'description'		=> "VARCHAR(500) NOT NULL DEFAULT ''",
-				'extra'				=> "VARCHAR(255) NOT NULL default ''",
-				'prymary_key'			=> "mid"
-			)
-		);
-
-		return $tables;
-	}
-
-	// List of columns
-	function _db_columns()
-	{
-		$tables = array(
-			'forums'	=> array(
-				'mysupport' => "INT(1) NOT NULL DEFAULT '0'",
-				'mysupportmove' => "INT(1) NOT NULL DEFAULT '0'",
-				'mysupportdenial' => "INT(1) NOT NULL DEFAULT '1'",
-				'technicalthreads' => "INT(5) NOT NULL DEFAULT '0'"
-			),
-			'threads'	=> array(
-				'status' => "INT(1) NOT NULL DEFAULT '0'",
-				'statusuid' => "INT(10) NOT NULL DEFAULT '0'",
-				'statustime' => "INT(10) NOT NULL DEFAULT '0'",
-				'onhold' => "INT(1) NOT NULL DEFAULT '0'",
-				'bestanswer' => "INT(10) NOT NULL DEFAULT '0'",
-				'assign' => "INT(10) NOT NULL DEFAULT '0'",
-				'assignuid' => "INT(10) NOT NULL DEFAULT '0'",
-				'priority' => "INT(5) NOT NULL DEFAULT '0'",
-				'closedbymysupport' => "INT(1) NOT NULL DEFAULT '0'",
-				'issupportthread' => "INT(1) NOT NULL DEFAULT '1'"
-			),
-			'users'	=> array(
-				'assignedthreads' => "VARCHAR(500) NOT NULL DEFAULT ''",
-				'deniedsupport' => "INT(1) NOT NULL DEFAULT '0'",
-				'deniedsupportreason' => "INT(5) NOT NULL DEFAULT '0'",
-				'deniedsupportuid' => "INT(10) NOT NULL DEFAULT '0'",
-				'mysupportdisplayastext' => "INT(1) NOT NULL DEFAULT '0'"
-			),
-			'usergroups'	=> array(
-				'canmarksolved' => "INT(1) NOT NULL DEFAULT '0'",
-				'canmarktechnical' => "INT(1) NOT NULL DEFAULT '0'",
-				'canseetechnotice' => "INT(1) NOT NULL DEFAULT '0'",
-				'canassign' => "INT(1) NOT NULL DEFAULT '0'",
-				'canbeassigned' => "INT(1) NOT NULL DEFAULT '0'",
-				'cansetpriorities' => "INT(1) NOT NULL DEFAULT '0'",
-				'canseepriorities' => "INT(1) NOT NULL DEFAULT '0'",
-				'canmanagesupportdenial' => "INT(1) NOT NULL DEFAULT '0'"
-			)
-		);
-
-		return $tables;
-	}
-
-	// Verify DB tables
-	function _db_verify_tables()
-	{
-		global $db;
-
-		$collation = $db->build_create_table_collation();
-		foreach($this->_db_tables() as $table => $fields)
-		{
-			if($db->table_exists($table))
-			{
-				foreach($fields as $field => $definition)
-				{
-					if($field == 'prymary_key')
-					{
-						continue;
-					}
-
-					if($db->field_exists($field, $table))
-					{
-						$db->modify_column($table, "`{$field}`", $definition);
-					}
-					else
-					{
-						$db->add_column($table, $field, $definition);
-					}
-				}
-			}
-			else
-			{
-				$query = "CREATE TABLE IF NOT EXISTS `".TABLE_PREFIX."{$table}` (";
-				foreach($fields as $field => $definition)
-				{
-					if($field == 'prymary_key')
-					{
-						$query .= "PRIMARY KEY (`{$definition}`)";
-					}
-					else
-					{
-						$query .= "`{$field}` {$definition},";
-					}
-				}
-				$query .= ") ENGINE=MyISAM{$collation};";
-				$db->write_query($query);
-			}
-		}
-	}
-
-	// Verify DB columns
-	function _db_verify_columns()
-	{
-		global $db;
-
-		foreach($this->_db_columns() as $table => $columns)
-		{
-			foreach($columns as $field => $definition)
-			{
-				if($db->field_exists($field, $table))
-				{
-					$db->modify_column($table, "`{$field}`", $definition);
-				}
-				else
-				{
-					$db->add_column($table, $field, $definition);
-				}
-			}
-		}
-	}
-
-	// Verify DB indexes
-	function _db_verify_indexes()
-	{
-	}
-
-	// Load our language file if neccessary
-	function lang_load()
-	{
-		global $lang;
-
-		if(!isset($lang->mysupport))
-		{
-			$lang->load(defined('IN_ADMINCP') ? 'config_mysupport' : 'mysupport');
-		}
-	}
-
-	// Check PL requirements
-	function meets_requirements()
-	{
-		global $PL;
-
-		$info = mysupport_info();
-
-		if(!file_exists(PLUGINLIBRARY))
-		{
-			global $lang;
-			$this->lang_load();
-
-			admin_redirect($lang->sprintf($lang->ougc_customrep_plreq, $info['pl']['url'], $info['pl']['version']));
-		}
-
-		$PL or require_once PLUGINLIBRARY;
-
-		if($PL->version < $info['pl']['version'])
-		{
-			global $lang;
-			$this->lang_load();
-
-			admin_redirect($lang->sprintf($lang->ougc_customrep_plold, $PL->version, $info['pl']['version'], $info['pl']['url']));
-		}
-	}
-}
-
-$GLOBALS['mysupport'] = new MySupport;
