@@ -126,12 +126,6 @@ forever=Forever',
 			'optionscode'	=> 'onoff',
 			'value'			=> 1,
 		),
-		'enablebestanswer'	=> array(
-			'title'			=> $lang->setting_mysupport_enablebestanswer,
-			'description'	=> $lang->setting_mysupport_enablebestanswer_desc,
-			'optionscode'	=> 'onoff',
-			'value'			=> 1,
-		),
 		'bestanswerrep'	=> array(
 			'title'			=> $lang->setting_mysupport_bestanswerrep,
 			'description'	=> $lang->setting_mysupport_bestanswerrep_desc,
@@ -375,11 +369,9 @@ none=None (Disabled)',
 
 	find_replace_templatesets("showthread", "#".preg_quote('{$footer}')."#i", '{$mysupport_js}{$footer}');
 
-	find_replace_templatesets("postbit", "#".preg_quote('trow1')."#i", 'trow1{$post[\'mysupport_bestanswer_highlight\']}{$post[\'mysupport_staff_highlight\']}');
+	find_replace_templatesets("postbit", "#".preg_quote('post_content')."#i", 'post_content{$post[\'mysupport_bestanswer_highlight\']}{$post[\'mysupport_staff_highlight\']}');
 
-	find_replace_templatesets("postbit", "#".preg_quote('trow2')."#i", 'trow2{$post[\'mysupport_bestanswer_highlight\']}{$post[\'mysupport_staff_highlight\']}');
-
-	find_replace_templatesets("postbit_classic", "#".preg_quote('{$altbg}')."#i", '{$altbg}{$post[\'mysupport_bestanswer_highlight\']}{$post[\'mysupport_staff_highlight\']}');
+	find_replace_templatesets("postbit_classic", "#".preg_quote('post_content')."#i", 'post_content{$post[\'mysupport_bestanswer_highlight\']}{$post[\'mysupport_staff_highlight\']}');
 
 	find_replace_templatesets("postbit", "#".preg_quote('{$post[\'subject_extra\']}')."#i", '{$post[\'subject_extra\']}<div class="float_right">{$post[\'mysupport_bestanswer\']}{$post[\'mysupport_deny_support_post\']}</div>');
 
@@ -415,9 +407,9 @@ none=None (Disabled)',
 
 	find_replace_templatesets("search_results_threads_inlinemoderation", "#".preg_quote('{$customthreadtools}')."#i", '{$customthreadtools}{$mysupport_inline_thread_moderation}');
 
-	find_replace_templatesets("modcp_nav", "#".preg_quote('{$lang->mcp_nav_modlogs}</a></td></tr>')."#i", '{$lang->mcp_nav_modlogs}</a></td></tr>{mysupport_nav_option}');
+	find_replace_templatesets("modcp_nav", "#".preg_quote('{$modcp_nav_users}')."#i", '{$modcp_nav_users}<!--mysupport_nav_option-->');
 
-	find_replace_templatesets("usercp_nav_misc", "#".preg_quote('{$lang->ucp_nav_forum_subscriptions}</a></td></tr>')."#i", '{$lang->ucp_nav_forum_subscriptions}</a></td></tr>{mysupport_nav_option}');
+	find_replace_templatesets("usercp_nav_misc", "#".preg_quote('{$lang->ucp_nav_forum_subscriptions}</a></td></tr>')."#i", '{$lang->ucp_nav_forum_subscriptions}</a></td></tr><!--mysupport_nav_option-->');
 
 	find_replace_templatesets("usercp", "#".preg_quote('{$latest_warnings}')."#i", '{$latest_warnings}<br />{$threads_list}');
 
@@ -486,9 +478,9 @@ function _deactivate()
 
 	find_replace_templatesets("search_results_threads_inlinemoderation", "#".preg_quote('{$mysupport_inline_thread_moderation}')."#i", '', 0);
 
-	find_replace_templatesets("modcp_nav", "#".preg_quote('{mysupport_nav_option}')."#i", '', 0);
+	find_replace_templatesets("modcp_nav", "#".preg_quote('<!--mysupport_nav_option-->')."#i", '', 0);
 
-	find_replace_templatesets("usercp_nav_misc", "#".preg_quote('{mysupport_nav_option}')."#i", '', 0);
+	find_replace_templatesets("usercp_nav_misc", "#".preg_quote('<!--mysupport_nav_option-->')."#i", '', 0);
 
 	find_replace_templatesets("usercp", "#".preg_quote('<br />{$threads_list}')."#i", '', 0);
 
