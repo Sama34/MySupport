@@ -123,6 +123,7 @@ $l['mysupport_display_style_forced'] = "Successfully forced the current status d
 $l['mysupport_mod_log_action_0'] = "Mark as Not Solved";
 $l['mysupport_mod_log_action_1'] = "Mark as Solved";
 $l['mysupport_mod_log_action_2'] = "Mark as Technical";
+$l['mysupport_mod_log_action_3'] = "";
 $l['mysupport_mod_log_action_4'] = "Mark as Not Technical";
 $l['mysupport_mod_log_action_5'] = "Add/change assign";
 $l['mysupport_mod_log_action_6'] = "Remove assign";

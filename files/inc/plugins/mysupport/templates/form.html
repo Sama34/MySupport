@@ -1,0 +1,13 @@
+<form action="showthread.php" method="post" style="display: inline;">
+	<input type="hidden" name="tid" value="{$tid}" />
+	<input type="hidden" name="action" value="mysupport" />
+	<input type="hidden" name="via_form" value="1" />
+	<input type="hidden" name="my_post_key" value="{$mybb->post_code}" />
+	{$status_list}
+	{$assigned_list}
+	{$priorities_list}
+	{$categories_list}
+	{$on_hold}
+	{$is_support_thread}
+	{$gobutton}
+</form><br />

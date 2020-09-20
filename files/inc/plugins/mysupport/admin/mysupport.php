@@ -24,6 +24,12 @@ if(!defined("IN_MYBB"))
 	exit;
 }
 
+$modules_dir = $modules_dir_backup;
+
+$run_module = $run_module_backup;
+
+$action_file = $action_file_backup;
+
 // rebuild the caches
 $cache->update_forums();
 $cache->update_usergroups();
@@ -58,7 +64,7 @@ elseif($mybb->input['action'] == "do_priorities")
 		);
 		$db->insert_query("mysupport", $insert);
 
-		mysupport_cache("priorities");
+		\MySupport\Core\_cache('priorities');
 
 		flash_message($lang->priority_added, 'success');
 		admin_redirect("index.php?module=config-mysupport&action=priorities");
@@ -78,7 +84,7 @@ elseif($mybb->input['action'] == "do_priorities")
 		);
 		$db->update_query("mysupport", $update, "mid = '{$pid}'");
 
-		mysupport_cache("priorities");
+		\MySupport\Core\_cache('priorities');
 
 		flash_message($lang->priority_edited, 'success');
 		admin_redirect("index.php?module=config-mysupport&action=priorities");
@@ -98,7 +104,7 @@ elseif($mybb->input['action'] == "do_priorities")
 			$db->update_query("threads", $update, "priority = '{$pid}'");
 			$db->delete_query("mysupport", "mid = '{$pid}' AND type = 'priority'");
 
-			mysupport_cache("priorities");
+			\MySupport\Core\_cache('priorities');
 
 			flash_message($lang->priority_deleted, 'success');
 			admin_redirect("index.php?module=config-mysupport&action=priorities");
@@ -132,7 +138,7 @@ elseif($mybb->input['action'] == "do_support_denial")
 		);
 		$db->insert_query("mysupport", $insert);
 
-		mysupport_cache("deniedreasons");
+		\MySupport\Core\_cache('deniedreasons');
 
 		flash_message($lang->support_denial_reason_added, 'success');
 		admin_redirect("index.php?module=config-mysupport&action=support_denial");
@@ -156,7 +162,7 @@ elseif($mybb->input['action'] == "do_support_denial")
 		);
 		$db->update_query("mysupport", $update, "mid = '{$drid}'");
 
-		mysupport_cache("deniedreasons");
+		\MySupport\Core\_cache('deniedreasons');
 
 		flash_message($lang->support_denial_reason_edited, 'success');
 		admin_redirect("index.php?module=config-mysupport&action=support_denial");
@@ -176,7 +182,7 @@ elseif($mybb->input['action'] == "do_support_denial")
 			$db->update_query("users", $update, "deniedsupportreason = '{$drid}'");
 			$db->delete_query("mysupport", "mid = '{$drid}'");
 
-			mysupport_cache("deniedreasons");
+			\MySupport\Core\_cache('deniedreasons');
 
 			flash_message($lang->support_denial_reason_deleted, 'success');
 			admin_redirect("index.php?module=config-mysupport&action=support_denial");
@@ -250,6 +256,7 @@ elseif($mybb->input['action'] == "support_denial")
 		$table = new Table;
 
 		$query = $db->simple_select("mysupport", "*", "type = 'deniedreason'");
+
 		if($db->num_rows($query) != 0)
 		{
 			$table->construct_header($lang->mysupport_name);
@@ -290,9 +297,8 @@ elseif($mybb->input['action'] == "support_denial")
 }
 elseif($mybb->input['action'] == "settings")
 {
-	$gid = mysupport_settings_gid();
 	// redirect to the settings page
-	admin_redirect("index.php?module=config-settings&action=change&gid={$gid}");
+	admin_redirect("index.php?module=config-settings&action=change&gid=".\MySupport\Admin\get_settings_gid());
 }
 else
 {

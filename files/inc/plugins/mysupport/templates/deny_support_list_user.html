@@ -1,0 +1,7 @@
+<tr>
+	<td class="{$bgcolor}" align="center" width="20%">{$support_denied_user}</td>
+	<td class="{$bgcolor}" align="center" width="30%">{$support_denial_reason}</td>
+	<td class="{$bgcolor}" align="center" width="20%">{$support_denier_user}</td>
+	<td class="{$bgcolor}" align="center" width="15%"><a href="{$mybb->settings['bburl']}/modcp.php?action=supportdenial&amp;do=denysupport&amp;uid={$denieduser['support_denied_uid']}">{$lang->edit}</a></td>
+	<td class="{$bgcolor}" align="center" width="15%"><a href="{$mybb->settings['bburl']}/modcp.php?action=supportdenial&amp;do=do_denysupport&amp;uid={$denieduser['support_denied_uid']}&amp;deniedsupportreason=-1&amp;my_post_key={$mybb->post_code}">{$lang->revoke}</a></td>
+</tr>

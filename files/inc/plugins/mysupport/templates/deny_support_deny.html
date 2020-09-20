@@ -1,0 +1,29 @@
+<form method="post" action="modcp.php">
+	<table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
+		<tr>
+			<td class="thead"><strong>{$deny_support_to}</strong></td>
+		</tr>
+		<tr>
+			<td class="trow1" align="center">{$lang->deny_support_desc}</td>
+		</tr>
+		<tr>
+			<td class="trow1" align="center">
+				<label for="username">{$lang->username}</label> <input type="text" name="username" id="username" value="{$username}" />
+			</td>
+		</tr>
+		<tr>
+			<td class="trow2" width="80%" align="center">
+				<input type="hidden" name="action" value="supportdenial" />
+				<input type="hidden" name="do" value="do_denysupport" />
+				<input type="hidden" name="my_post_key" value="{$mybb->post_code}" />
+				<input type="hidden" name="tid" value="{$tid}" />
+				{$deniedreasons}
+			</td>
+		</tr>
+		<tr>
+			<td class="trow2" width="80%" align="center">
+				<input type="submit" value="{$lang->deny_support}" />
+			</td>
+		</tr>
+	</table>
+</form>

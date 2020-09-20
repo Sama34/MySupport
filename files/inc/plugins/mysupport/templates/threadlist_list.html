@@ -1,0 +1,14 @@
+{$mysupport_priority_classes}
+<table border="0" cellspacing="{$theme['borderwidth']}" cellpadding="{$theme['tablespace']}" class="tborder">
+	<tr>
+		<td class="thead" width="100%" colspan="4"><strong>{$thread_list_heading}</strong><div class="float_right">{$threadlist_filter_form}</div></td>
+	</tr>
+	<tr>
+		<td class="tcat" width="30%"><strong>{$lang->thread_list_threadauthor}</strong></td>
+		<td class="tcat" width="25%"><strong>{$lang->forum}</strong></td>
+		<td class="tcat" width="25%"><strong>{$status_heading}</strong></td>
+		<td class="tcat" width="20%" ><strong>{$lang->thread_list_lastpost}:</strong></td>
+	</tr>
+	{$threads}
+	{$view_all}
+</table>
