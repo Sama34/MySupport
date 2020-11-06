@@ -466,8 +466,12 @@ function member_profile_end()
 			WHERE t.fid IN (".$db->escape_string($mysupport_forums).")
 			AND p.uid = '".intval($memprofile['uid'])."'
 		");
+
 		$bestanswers = $db->fetch_field($query, "bestanswers");
-		$bestanswers = "<tr><td class=\"trow1\" width=\"50%\"><strong>".$lang->best_answers_given."</strong></td><td class=\"trow1\" width=\"50%\">".$bestanswers."</td></tr>";
+
+		$bestanswers = my_number_format($bestanswers);
+
+		$bestanswers = eval($templates->render('mysupport_member_profile_bestanswer'));
 		$something_to_show = true;
 	}
 
@@ -484,9 +488,9 @@ function member_profile_end()
 					$deniedsupportreason = $mysupport_cache['deniedreasons'][$memprofile['deniedsupportreason']]['name'];
 					$denied_text .= " ".$lang->sprintf($lang->deniedsupport_reason, htmlspecialchars_uni($deniedsupportreason));
 				}
-				$denied_text = "<a href=\"{$mybb->settings['bburl']}/modcp.php?action=supportdenial&do=denysupport&uid=".$memprofile['uid']."\">".$denied_text."</a>";
+				$denied_text = eval($templates->render('mysupport_member_profile_deniedtext_link'));
 			}
-			$denied_text = "<tr><td colspan=\"2\" class=\"trow2\">".$denied_text."</td></tr>";
+			$denied_text = eval($templates->render('mysupport_member_profile_deniedtext'));
 			$something_to_show = true;
 		}
 	}
@@ -665,12 +669,15 @@ function modcp_start()
 
 			add_breadcrumb($deny_support_to);
 
-			$deniedreasons = "";
-			$deniedreasons .= "<label for=\"deniedsupportreason\">{$lang->reason}:</label> <select name=\"deniedsupportreason\" id=\"deniedsupportreason\">\n";
+			$options = '';
+
 			// if they've not been denied support yet or no reason was given, show an empty option that will be selected
 			if($user['deniedsupport'] == 0 || $user['deniedsupportreason'] == 0)
 			{
-				$deniedreasons .= "<option value=\"0\"></option>\n";
+				$value = 0;
+				$text = $selected = '';
+
+				$options .= eval($templates->render('mysupport_modcp_deniedreasons_option'));
 			}
 
 			$mysupport_cache = $cache->read("mysupport");
@@ -679,23 +686,50 @@ function modcp_start()
 				// if there's one or more reasons set, show them in a dropdown
 				foreach($mysupport_cache['deniedreasons'] as $deniedreasons)
 				{
-					$selected = "";
+					$value = (int)$deniedreason['mid'];
+
+					$text = htmlspecialchars_uni($deniedreason['name']);
+
+					$selected = '';
+
 					// if a reason has been given, we'd be editing it, so this would select the current one
 					if($user['deniedsupport'] == 1 && $user['deniedsupportreason'] == $deniedreason['mid'])
 					{
-						$selected = " selected=\"selected\"";
+						$selected = ' selected="selected"';
 					}
-					$deniedreasons .= "<option value=\"".intval($deniedreason['mid'])."\"{$selected}>".htmlspecialchars_uni($deniedreason['name'])."</option>\n";
+	
+					$options .= eval($templates->render('mysupport_modcp_deniedreasons_option'));
 				}
 			}
-			$deniedreasons .= "<option value=\"0\">{$lang->support_denial_reasons_none}</option>\n";
+	
+			$value = 0;
+
+			$text = $lang->support_denial_reasons_none;
+
+			$selected = '';
+
+			$options .= eval($templates->render('mysupport_modcp_deniedreasons_option'));
+
 			// if they've been denied support, give an option to revoke it
 			if($user['deniedsupport'] == 1)
 			{
-				$deniedreasons .= "<option value=\"0\">-----</option>\n";
-				$deniedreasons .= "<option value=\"-1\">{$lang->revoke}</option>\n";
+				$value = 0;
+	
+				$text = '-----';
+	
+				$selected = '';
+	
+				$options .= eval($templates->render('mysupport_modcp_deniedreasons_option'));
+
+				$value = -1;
+
+				$text = $lang->revoke;
+	
+				$selected = '';
+	
+				$options .= eval($templates->render('mysupport_modcp_deniedreasons_option'));
 			}
-			$deniedreasons .= "</select>\n";
+			$deniedreasons = eval($templates->render('mysupport_modcp_deniedreasons'));
 
 			$deny_support = eval($templates->render('mysupport_deny_support_deny'));
 			$deny_support_page = eval($templates->render('mysupport_deny_support'));
@@ -766,7 +800,7 @@ function modcp_start()
 			}
 			else
 			{
-				$denied_users = "<tr><td class=\"trow1\" align=\"center\" colspan=\"5\">{$lang->support_denial_no_users}</td></tr>";
+				$denied_users = eval($templates->render('mysupport_modcp_deniedusers'));
 			}
 
 			$deny_support = eval($templates->render('mysupport_deny_support_list'));
@@ -1008,19 +1042,19 @@ function modcp_start20()
 						$solved_percentage = round(($solved_count / $total_count) * 100);
 						if($solved_percentage > 0)
 						{
-							$solved_row = "<td class=\"mysupport_bar_solved\" width=\"{$solved_percentage}%\"></td>";
+							$solved_row = eval($templates->render('mysupport_modcp_solved_row'));
 						}
 
 						$notsolved_percentage = round(($notsolved_count / $total_count) * 100);
 						if($notsolved_percentage > 0)
 						{
-							$notsolved_row = "<td class=\"mysupport_bar_notsolved\" width=\"{$notsolved_percentage}%\"></td>";
+							$notsolved_row = eval($templates->render('mysupport_modcp_notsolved_row'));
 						}
 
 						$technical_percentage = round(($technical_count / $total_count) * 100);
 						if($technical_percentage > 0)
 						{
-							$technical_row = "<td class=\"mysupport_bar_technical\" width=\"{$technical_percentage}%\"></td>";
+							$technical_row = eval($templates->render('mysupport_modcp_technical_row'));
 						}
 					}
 
@@ -1059,7 +1093,7 @@ function modcp_start20()
 						if($newthreads != 0)
 						{
 							$newthreads_text = $lang->sprintf($lang->thread_list_newthreads, intval($newthreads));
-							$newthreads = "<tr><td class=\"trow1\" align=\"center\"><a href=\"{$mybb->settings['bburl']}/usercp.php?action=supportthreads&amp;do=new\">{$newthreads_text}</a></td></tr>";
+							$newthreads = eval($templates->render('mysupport_modcp_newthreads'));
 						}
 						else
 						{
@@ -1354,14 +1388,7 @@ function modcp_start20()
 			$navigation = "$usercpnav";
 		}
 
-		$threadlist_filter_form = "";
-		$threadlist_filter_form .= "<form action=\"".THIS_SCRIPT."?action=".$mybb->input['action']."\" method=\"get\">";
-		$threadlist_filter_form .= $lang->filter_by;
-		$threadlist_filter_form .= "<option value=\"0\">".$lang->status."</option>";
-		$threadlist_filter_form .= "<option value=\"-1\">".$lang->not_solved."</option>";
-		$threadlist_filter_form .= "<option value=\"1\">".$lang->solved."</option>";
-		//if
-		$threadlist_filter_form .= "</form>";
+		$threadlist_filter_form = eval($templates->render('mysupport_modcp_threadlist_filter_form'));
 
 		$threads_list = eval($templates->render('mysupport_threadlist_list'));
 		// we only want to output the page if we've got an action; i.e. we're not viewing the list on the User CP home page
@@ -2064,8 +2091,7 @@ function showthread_start20()
 					$mysupport_cache = $cache->read("mysupport");
 					if(!empty($mysupport_cache['priorities']))
 					{
-						$priorities_list .= "<label for=\"priority\">".$lang->priority."</label> <select name=\"priority\">\n";
-						$priorities_list .= "<option value=\"0\"></option>\n";
+						$priorities_list_options = '';
 
 						foreach($mysupport_cache['priorities'] as $priority)
 						{
@@ -2084,9 +2110,10 @@ function showthread_start20()
 						}
 						if($thread['priority'] != 0)
 						{
-							$priorities_list .= "<option value=\"-1\">".$lang->priority_none."</option>\n";
+							$priorities_list_options = eval($templates->render('mysupport_showthread_priority_list_option'));
 						}
-						$priorities_list .= "</select>\n";
+
+						$priorities_list = eval($templates->render('mysupport_showthread_priority_list'));
 						if($mybb->input['ajax'])
 						{
 							$priorities_list = "<tr>\n<td class=\"trow1\" align=\"center\">".$priorities_list."\n</td>\n</tr>";
